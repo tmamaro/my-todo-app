@@ -18,3 +18,6 @@ class Task(Base):
 class TaskCreate(BaseModel):
     title: str
     is_completed: bool
+
+class TaskUpdate(BaseModel):
+    is_completed: bool
