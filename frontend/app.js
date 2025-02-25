@@ -2,6 +2,7 @@ const apiUrl = 'http://localhost:8000/tasks';
 
 document.addEventListener('DOMContentLoaded', () => {
   fetchTasks();
+  enableColumnResizing();
 
   document.getElementById('add-task-button').addEventListener('click', addTask);
   document.getElementById('taskInput').addEventListener('keypress', (event) => {
@@ -102,4 +103,30 @@ async function deleteTask(taskId) {
 function formatDate(dateString) {
   const date = new Date(dateString);
   return `${date.getDate().toString().padStart(2, '0')} ${date.toLocaleString('default', { month: 'short' }).toUpperCase()} ${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+}
+
+/* Column Resizing */
+function enableColumnResizing() {
+  document.querySelectorAll('.resizer').forEach(resizer => {
+    let startX, startWidth, column;
+
+    resizer.addEventListener('mousedown', function (event) {
+      startX = event.clientX;
+      column = event.target.parentElement;
+      startWidth = column.offsetWidth;
+
+      document.addEventListener('mousemove', resizeColumn);
+      document.addEventListener('mouseup', stopResize);
+    });
+
+    function resizeColumn(event) {
+      const newWidth = startWidth + (event.clientX - startX);
+      column.style.width = `${newWidth}px`;
+    }
+
+    function stopResize() {
+      document.removeEventListener('mousemove', resizeColumn);
+      document.removeEventListener('mouseup', stopResize);
+    }
+  });
 }

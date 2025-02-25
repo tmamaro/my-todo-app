@@ -7,20 +7,17 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="app.js" defer></script>
   <style>
-    /* Make the table scrollable while keeping headers fixed */
     .table-container {
-      max-height: 400px; /* Set a fixed height for scrolling */
+      max-height: 400px;
       overflow-y: auto;
       overflow-x: auto;
     }
 
-    /* Always show scrollbars */
     .always-show-scrollbar {
       overflow: auto;
       scrollbar-gutter: stable both-edges;
     }
 
-    /* Fix table layout */
     table {
       width: 100%;
       table-layout: fixed;
@@ -32,14 +29,28 @@
       padding: 10px;
       border: 1px solid #ccc;
       word-wrap: break-word;
+      position: relative;
     }
 
-    /* Fix header position */
     thead {
       position: sticky;
       top: 0;
       background-color: #f3f4f6;
       z-index: 2;
+    }
+
+    .resizer {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 5px;
+      height: 100%;
+      cursor: col-resize;
+      background-color: transparent;
+    }
+
+    .resizer:hover {
+      background-color: gray;
     }
   </style>
 </head>
@@ -51,27 +62,24 @@
       <input type="text" id="taskInput" placeholder="Enter task" class="w-full md:w-4/5 p-2 border border-gray-300 rounded mb-4">
     </div>
 
-    <!-- Add Task button -->
     <div class="flex justify-center">
       <button id="add-task-button" class="bg-blue-500 text-white px-6 py-2 rounded transition duration-200 ease-in-out hover:bg-blue-600 focus:outline-none active:scale-95">
         <span id="button-text">Add Task</span>
       </button>
     </div>
 
-    <!-- Table Wrapper -->
     <div class="w-full always-show-scrollbar mt-6 border border-gray-300 table-container">
       <table>
         <thead>
           <tr class="bg-gray-200">
-            <th class="w-[200px]">Title</th>
-            <th class="w-[250px]">Notes</th>
-            <th class="w-[150px]">Created at</th>
-            <th class="w-[100px]">Status</th>
-            <th class="w-[120px]">Action</th>
+            <th class="w-[200px]">Title<div class="resizer"></div></th>
+            <th class="w-[250px]">Notes<div class="resizer"></div></th>
+            <th class="w-[150px]">Created at<div class="resizer"></div></th>
+            <th class="w-[100px]">Status<div class="resizer"></div></th>
+            <th class="w-[120px]">Action<div class="resizer"></div></th>
           </tr>
         </thead>
         <tbody id="taskList">
-          <!-- Tasks will be dynamically added here -->
         </tbody>
       </table>
     </div>
