@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
-from models import Task, TaskCreate, TaskUpdate  # Ensure you import your models
+from models import Task, TaskCreate, TaskUpdate, TaskNotesUpdate  # Ensure you import your models
 from database import get_db  # Your database session function
 
 app = FastAPI()
@@ -33,7 +33,24 @@ def update_task(task_id: int, task: TaskUpdate, db: Session = Depends(get_db)):
     db_task = db.query(Task).filter(Task.id == task_id).first()
     if not db_task:
         raise HTTPException(status_code=404, detail="Task not found")
-    db_task.is_completed = task.is_completed
+    # Only update fields that are provided
+    if task.is_completed is not None:
+        db_task.is_completed = task.is_completed
+    if task.notes is not None:
+        db_task.notes = task.notes
+    db.commit()
+    db.refresh(db_task)
+    return db_task
+    
+@app.patch("/tasks/{task_id}/notes")
+def update_task_notes(task_id: int, task_notes: TaskNotesUpdate, db: Session = Depends(get_db)):
+    db_task = db.query(Task).filter(Task.id == task_id).first()
+    if not db_task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if task_notes.notes is not None:
+        db_task.notes = task_notes.notes  # Update only notes
+    
     db.commit()
     db.refresh(db_task)
     return db_task

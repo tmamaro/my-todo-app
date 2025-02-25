@@ -6,46 +6,72 @@
   <title>To-Do App</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="app.js" defer></script>
+  <style>
+    /* Make the table scrollable while keeping headers fixed */
+    .table-container {
+      max-height: 400px; /* Set a fixed height for scrolling */
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+
+    /* Always show scrollbars */
+    .always-show-scrollbar {
+      overflow: auto;
+      scrollbar-gutter: stable both-edges;
+    }
+
+    /* Fix table layout */
+    table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: center;
+      padding: 10px;
+      border: 1px solid #ccc;
+      word-wrap: break-word;
+    }
+
+    /* Fix header position */
+    thead {
+      position: sticky;
+      top: 0;
+      background-color: #f3f4f6;
+      z-index: 2;
+    }
+  </style>
 </head>
 <body class="bg-gray-100 flex justify-center items-center min-h-screen">
-  <div class="w-4/5 p-4">
+  <div class="w-full md:w-4/5 p-4">
     <h1 class="text-3xl font-bold text-center mb-4">To-Do App</h1>
-    <div class="flex justify-center">
-      <input type="text" id="taskInput" placeholder="Enter task" class="w-4/5 p-2 border border-gray-300 rounded mb-4">
-    </div>
-    
-    <!-- Updated Add Task button -->
-    <div class="flex justify-center">
-      <button 
-        id="add-task-button"
-        onclick="addTask()"
-        class="bg-blue-500 text-white px-6 py-2 rounded transition duration-200 ease-in-out hover:bg-blue-600 focus:outline-none active:scale-95"
-        type="button"
-      >
-        <!-- Button Text -->
-        <span id="button-text">Add Task</span>
 
-        <!-- Spinner (hidden by default) -->
-        <svg id="spinner" class="hidden w-5 h-5 ml-2 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0116 0 8 8 0 01-16 0z"></path>
-        </svg>
+    <div class="flex justify-center">
+      <input type="text" id="taskInput" placeholder="Enter task" class="w-full md:w-4/5 p-2 border border-gray-300 rounded mb-4">
+    </div>
+
+    <!-- Add Task button -->
+    <div class="flex justify-center">
+      <button id="add-task-button" class="bg-blue-500 text-white px-6 py-2 rounded transition duration-200 ease-in-out hover:bg-blue-600 focus:outline-none active:scale-95">
+        <span id="button-text">Add Task</span>
       </button>
     </div>
-    
-    <!-- Task Table -->
-    <div class="overflow-x-auto mt-6 flex justify-center">
-      <table class="w-4/5 table-auto border-collapse border border-gray-300">
+
+    <!-- Table Wrapper -->
+    <div class="w-full always-show-scrollbar mt-6 border border-gray-300 table-container">
+      <table>
         <thead>
           <tr class="bg-gray-200">
-            <th class="border px-4 py-2 text-left">Title</th>
-            <th class="border px-4 py-2 w-[170px] text-center">Created at</th>
-            <th class="border px-4 py-2 w-[60px] text-center">Status</th>
-            <th class="border px-4 py-2 w-[100px] text-center">Action</th>
+            <th class="w-[200px]">Title</th>
+            <th class="w-[250px]">Notes</th>
+            <th class="w-[150px]">Created at</th>
+            <th class="w-[100px]">Status</th>
+            <th class="w-[120px]">Action</th>
           </tr>
         </thead>
         <tbody id="taskList">
-          <!-- Task rows will be inserted here -->
+          <!-- Tasks will be dynamically added here -->
         </tbody>
       </table>
     </div>
