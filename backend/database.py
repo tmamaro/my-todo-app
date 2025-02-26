@@ -20,7 +20,9 @@ Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Set search_path when creating a session
-def get_db() -> Session:
+from typing import Generator
+
+def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
         db.execute(text("SET search_path TO todo_db"))  # Use text() for raw SQL

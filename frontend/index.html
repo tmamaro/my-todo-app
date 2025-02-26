@@ -1,88 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>To-Do App</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="app.js" defer></script>
-  <style>
-    .table-container {
-      max-height: 400px;
-      overflow-y: auto;
-      overflow-x: auto;
-    }
-
-    .always-show-scrollbar {
-      overflow: auto;
-      scrollbar-gutter: stable both-edges;
-    }
-
-    table {
-      width: 100%;
-      table-layout: fixed;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      text-align: center;
-      padding: 10px;
-      border: 1px solid #ccc;
-      word-wrap: break-word;
-      position: relative;
-    }
-
-    thead {
-      position: sticky;
-      top: 0;
-      background-color: #f3f4f6;
-      z-index: 2;
-    }
-
-    .resizer {
-      position: absolute;
-      right: 0;
-      top: 0;
-      width: 5px;
-      height: 100%;
-      cursor: col-resize;
-      background-color: transparent;
-    }
-
-    .resizer:hover {
-      background-color: gray;
-    }
-  </style>
-</head>
-<body class="bg-gray-100 flex justify-center items-center min-h-screen">
-  <div class="w-full md:w-4/5 p-4">
-    <h1 class="text-3xl font-bold text-center mb-4">To-Do App</h1>
-
-    <div class="flex justify-center">
-      <input type="text" id="taskInput" placeholder="Enter task" class="w-full md:w-4/5 p-2 border border-gray-300 rounded mb-4">
-    </div>
-
-    <div class="flex justify-center">
-      <button id="add-task-button" class="bg-blue-500 text-white px-6 py-2 rounded transition duration-200 ease-in-out hover:bg-blue-600 focus:outline-none active:scale-95">
-        <span id="button-text">Add Task</span>
-      </button>
-    </div>
-
-    <div class="w-full always-show-scrollbar mt-6 border border-gray-300 table-container">
-      <table>
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="w-[200px]">Title<div class="resizer"></div></th>
-            <th class="w-[250px]">Notes<div class="resizer"></div></th>
-            <th class="w-[150px]">Created at<div class="resizer"></div></th>
-            <th class="w-[100px]">Status<div class="resizer"></div></th>
-            <th class="w-[120px]">Action<div class="resizer"></div></th>
-          </tr>
-        </thead>
-        <tbody id="taskList">
-        </tbody>
-      </table>
-    </div>
-  </div>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + Vue</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>

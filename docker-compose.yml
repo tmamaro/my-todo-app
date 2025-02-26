@@ -21,7 +21,16 @@ services:
       - DATABASE_URL=postgresql://tmamaro:TAProjectToDos@db:5432/todo_db
   frontend:
     build: ./frontend
+    container_name: todo-frontend
+    restart: always
+    depends_on:
+      - backend
     ports:
-      - "80:80"
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: "http://localhost:8000"
 volumes:
   pg_data:
