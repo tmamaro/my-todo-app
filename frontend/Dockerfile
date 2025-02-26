@@ -8,8 +8,6 @@ WORKDIR /app
 
 # Copy dependencies
 COPY ./index.html /usr/share/nginx/html/
-COPY ./app.js /usr/share/nginx/html/
-COPY ./styles.css /usr/share/nginx/html/
 COPY package.json package-lock.json ./
 RUN npm install
 

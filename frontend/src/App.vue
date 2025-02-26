@@ -1,11 +1,15 @@
 <template>
-  <div id="app">
-    <router-view></router-view> <!-- This will render the active route -->
-  </div>
+  <Layout>
+    <router-view /> <!-- This will render the active route -->
+  </Layout>
 </template>
 
 <script>
+import Layout from './components/Layout.vue';
+
 export default {
-  name: 'App',
+  components: {
+    Layout,
+  },
 };
 </script>
