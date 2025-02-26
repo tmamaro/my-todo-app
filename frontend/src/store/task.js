@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 
 export const useTaskStore = defineStore('task', {
   state: () => ({
-    tasks: []
+    tasks: [],
   }),
   actions: {
     async fetchTasks() {
@@ -15,20 +15,23 @@ export const useTaskStore = defineStore('task', {
       }
     },
     async addTask(taskTitle) {
+      if (!taskTitle.trim()) {
+        console.error('Task title cannot be empty');
+        return; // Validation check
+      }
+      
       try {
         // Send a request to add the task
         const response = await fetch('http://localhost:8000/tasks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: taskTitle, notes: '', is_completed: false })
+          body: JSON.stringify({ title: taskTitle, notes: '', is_completed: false }),
         });
 
         // Check if the response is successful
         if (response.ok) {
-          const newTask = await response.json(); // Assuming the backend sends the task object back
-          
-          // Add the new task to the store's state (reactivity)
-          this.tasks = [newTask, ...this.tasks]; // Prepend the new task for immediate update in the list
+          const newTask = await response.json();
+          this.tasks = [newTask, ...this.tasks]; // Optimistic update
         } else {
           console.error('Failed to add task');
         }
@@ -38,33 +41,63 @@ export const useTaskStore = defineStore('task', {
     },
     async updateStatus(task) {
       try {
-        await fetch(`http://localhost:8000/tasks/${task.id}`, {
+        const response = await fetch(`http://localhost:8000/tasks/${task.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ is_completed: task.is_completed })
+          body: JSON.stringify({ is_completed: task.is_completed }),
         });
+        
+        if (response.ok) {
+          // Optimistically update the status in the store directly if the API call was successful
+          const updatedTask = await response.json();
+          const taskIndex = this.tasks.findIndex(t => t.id === task.id);
+          if (taskIndex !== -1) {
+            this.tasks[taskIndex] = updatedTask;
+          }
+        } else {
+          console.error('Failed to update task status');
+        }
       } catch (error) {
         console.error('Error updating status:', error);
       }
     },
     async updateNotes(task) {
       try {
-        await fetch(`http://localhost:8000/tasks/${task.id}/notes`, {
+        const response = await fetch(`http://localhost:8000/tasks/${task.id}/notes`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ notes: task.notes })
+          body: JSON.stringify({ notes: task.notes }),
         });
+
+        if (response.ok) {
+          // Optimistically update the notes in the store directly if the API call was successful
+          const updatedTask = await response.json();
+          const taskIndex = this.tasks.findIndex(t => t.id === task.id);
+          if (taskIndex !== -1) {
+            this.tasks[taskIndex] = updatedTask;
+          }
+        } else {
+          console.error('Failed to update task notes');
+        }
       } catch (error) {
         console.error('Error updating notes:', error);
       }
     },
     async deleteTask(taskId) {
       try {
-        await fetch(`http://localhost:8000/tasks/${taskId}`, { method: 'DELETE' });
-        this.tasks = this.tasks.filter(task => task.id !== taskId); // Directly remove the task from state
+        const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          // Optimistically remove the task from the store if the delete request was successful
+          this.tasks = this.tasks.filter(task => task.id !== taskId);
+        } else {
+          console.error('Failed to delete task');
+        }
       } catch (error) {
         console.error('Error deleting task:', error);
       }
-    }
-  }
+    },
+  },
 });

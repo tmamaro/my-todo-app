@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from models import Task, TaskCreate, TaskUpdate, TaskNotesUpdate  # Ensure you import your models
@@ -9,7 +9,7 @@ app = FastAPI()
 # Allow CORS for all origins (or specify your front-end URL)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # You can replace "*" with specific origins like ["http://localhost:3000"]
+    allow_origins=["http://localhost:5173"],  # You can replace "*" with specific origins like ["http://localhost:3000"] -> my frontend host
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods (GET, POST, PUT, DELETE, etc.)
     allow_headers=["*"],  # Allows all headers
@@ -20,7 +20,7 @@ def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).all()
     return tasks
 
-@app.post("/tasks")
+@app.post("/tasks", status_code=status.HTTP_201_CREATED)
 def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     db_task = Task(title=task.title, is_completed=task.is_completed)
     db.add(db_task)
