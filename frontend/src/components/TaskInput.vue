@@ -4,12 +4,12 @@
       type="text"
       v-model="taskInput"
       placeholder="Enter task"
-      class="w-full md:w-4/5 p-2 border border-gray-300 rounded"
+      class="border border-gray-300 rounded-md p-2 w-full md:w-4/5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
       @keypress="handleKeyPress"
     />
     <button
       @click="handleAddTask"
-      class="bg-blue-500 text-white px-6 py-2 rounded ml-2 transition duration-200 ease-in-out hover:bg-blue-600 focus:outline-none active:scale-95"
+      class="bg-indigo-500 text-white px-6 py-2 rounded-md ml-2 transition duration-200 ease-in-out hover:bg-indigo-300 hover:text-black hover:shadow-md focus:outline-none active:scale-95"
     >
       Add Task
     </button>
