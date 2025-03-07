@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
 from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declarative_base
@@ -26,4 +26,16 @@ class TaskUpdate(BaseModel):
     notes: Optional[str] = None  # Allow updating only notes
 
 class TaskNotesUpdate(BaseModel):
-    notes: Optional[str] = None
+    notes: Optional[str] = None  # Allow updating only notes
+
+class User(Base):
+    __tablename__ = "users"
+    __table_args__ = {"schema": "todo_db"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(320), nullable=False, unique=True, index=True)
+    password = Column(String)
+
+class UserCreate(BaseModel):
+    email: str
+    password: constr(min_length=8, max_length=64)  # type: ignore # Enforce password length)

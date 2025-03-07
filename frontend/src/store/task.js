@@ -1,19 +1,30 @@
 import { defineStore } from 'pinia';
+import { supabase } from '../supabaseClient';
 
 export const useTaskStore = defineStore('task', {
+  
   state: () => ({
     tasks: [],
   }),
+
   actions: {
+
+    // Fetch all tasks from Supabase
     async fetchTasks() {
       try {
-        const response = await fetch('http://localhost:8000/tasks');
-        const data = await response.json();
-        this.tasks = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*')
+          .order('created_at', { ascending: false }); // Sort by most recent
+
+        if (error) throw error;
+        this.tasks = data;
       } catch (error) {
         console.error('Error fetching tasks:', error);
       }
     },
+
+    // Add a new task to Supabase
     async addTask(taskTitle) {
       if (!taskTitle.trim()) {
         console.error('Task title cannot be empty');
@@ -21,83 +32,87 @@ export const useTaskStore = defineStore('task', {
       }
       
       try {
-        // Send a request to add the task
-        const response = await fetch('http://localhost:8000/tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: taskTitle, notes: '', is_completed: false }),
-        });
+        const { data, error } = await supabase
+          .from('tasks')
+          .insert([{ title: taskTitle, notes: '', is_completed: false }])
+          .select(); // Return the inserted row
 
-        // Check if the response is successful
-        if (response.ok) {
-          const newTask = await response.json();
-          this.tasks = [newTask, ...this.tasks]; // Optimistic update
-        } else {
-          console.error('Failed to add task');
-        }
+        if (error) throw error;
+        this.tasks = [data[0], ...this.tasks]; // Optimistic update
       } catch (error) {
         console.error('Error adding task:', error);
       }
     },
+
+    // commented while using supabase
+    //    // Check if the response is successful
+    //    if (response.ok) {
+    //      const newTask = await response.json();
+    //      this.tasks = [newTask, ...this.tasks]; // Optimistic update
+    //    } else {
+    //      console.error('Failed to add task');
+    //    }
+    //  } catch (error) {
+    //    console.error('Error adding task:', error);
+    //  }
+    //},
+
+
+    // Update task status in Supabase
     async updateStatus(task) {
       try {
-        const response = await fetch(`http://localhost:8000/tasks/${task.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ is_completed: task.is_completed }),
-        });
+        const { data, error } = await supabase
+          .from('tasks')
+          .update({ is_completed: task.is_completed })
+          .eq('id', task.id)
+          .select(); // Return the updated row
         
-        if (response.ok) {
-          // Optimistically update the status in the store directly if the API call was successful
-          const updatedTask = await response.json();
+          if (error) throw error;
+          const updatedTask = data[0];
           const taskIndex = this.tasks.findIndex(t => t.id === task.id);
           if (taskIndex !== -1) {
-            this.tasks[taskIndex] = updatedTask;
+            this.tasks[taskIndex] = updatedTask; // Update the store
           }
-        } else {
-          console.error('Failed to update task status');
+        } catch (error) {
+          console.error('Error updating task status:', error);
         }
-      } catch (error) {
-        console.error('Error updating status:', error);
-      }
     },
+
+
+    // Update task notes in Supabase
     async updateNotes(task) {
       try {
-        const response = await fetch(`http://localhost:8000/tasks/${task.id}/notes`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ notes: task.notes }),
-        });
+        const { data, error } = await supabase
+        .from('tasks')
+        .update({ notes: task.notes })
+        .eq('id', task.id)
+        .select(); // Return the updated row
 
-        if (response.ok) {
-          // Optimistically update the notes in the store directly if the API call was successful
-          const updatedTask = await response.json();
-          const taskIndex = this.tasks.findIndex(t => t.id === task.id);
-          if (taskIndex !== -1) {
-            this.tasks[taskIndex] = updatedTask;
-          }
-        } else {
-          console.error('Failed to update task notes');
+        if (error) throw error;
+        const updatedTask = data[0];
+        const taskIndex = this.tasks.findIndex(t => t.id === task.id);
+        if (taskIndex !== -1) {
+          this.tasks[taskIndex] = updatedTask; // Update the store
         }
       } catch (error) {
-        console.error('Error updating notes:', error);
+        console.error('Error updating task notes:', error);
       }
     },
+
+
+    // Delete a task from Supabase
     async deleteTask(taskId) {
       try {
-        const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
-          method: 'DELETE',
-        });
+        const { error } = await supabase
+          .from('tasks')
+          .delete()
+          .eq('id', taskId);
 
-        if (response.ok) {
-          // Optimistically remove the task from the store if the delete request was successful
-          this.tasks = this.tasks.filter(task => task.id !== taskId);
-        } else {
-          console.error('Failed to delete task');
+          if (error) throw error;
+          this.tasks = this.tasks.filter(task => task.id !== taskId); // Optimistic update
+        } catch (error) {
+          console.error('Error deleting task:', error);
         }
-      } catch (error) {
-        console.error('Error deleting task:', error);
-      }
+      },
     },
-  },
-});
+  });

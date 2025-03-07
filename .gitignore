@@ -16,5 +16,9 @@ node_modules/
 *.sql
 *.db
 
-# My Scripting
+# Project specific test files and others
 MyScripting/
+MyFiles/
+
+# Extras
+.stylelintrc.json

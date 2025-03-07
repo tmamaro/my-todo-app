@@ -1,6 +1,10 @@
 /* src/style.css */
+
+/* stylelint-disable-next-line */
 @tailwind base;
+/* stylelint-disable-next-line */
 @tailwind components;
+/* eslint-disable-next-line */
 @tailwind utilities;
 
 
@@ -65,7 +69,7 @@ button:focus-visible {
 }
 
 #app {
-  max-width: 1280px;
+  max-width:2280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
@@ -85,13 +89,75 @@ button:focus-visible {
 }
 
 /* Example for adding responsiveness */
+
 @media screen and (max-width: 640px) {
+
   .task-list {
+
       flex-direction: column;
+
   }
+
   .task-table {
+
       display: block;
+
       overflow-x: auto;
+
   }
 }
 
+/* Custom Animations */
+@keyframes float1 {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-20px) translateX(20px); }
+}
+
+@keyframes float2 {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-30px) translateX(-30px); }
+}
+
+@keyframes float3 {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-10px) translateX(10px); }
+}
+
+@keyframes fade-in-down {
+  0% { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float1 {
+  animation: float1 6s infinite ease-in-out;
+}
+
+.animate-float2 {
+  animation: float2 8s infinite ease-in-out;
+}
+
+.animate-float3 {
+  animation: float3 10s infinite ease-in-out;
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 1s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 1s ease-out;
+}
+
+.animate-bounce {
+  animation: bounce 2s infinite;
+}

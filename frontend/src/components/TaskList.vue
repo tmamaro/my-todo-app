@@ -1,20 +1,3 @@
-<!-- 
-margin - mt-4
-padding - p-4
-pixels - px-6 py-2 ?
-rounding - rounded-md
-hover - bg-indigo-300 hover:text-black  
-focus - focus:ring-2 focus:ring-indigo-500
-font - font-sans-serif font-bold
-text - text-center text-3xl text-white text-gray-500
-display options - sm md lg xl
-hide on screens - sm:hidden; hidden sm:table-cell
-table resizing and centering options: mx-auto max-w-5xl overflow-x-auto table-auto w-full
-input field take full container width - w-full
-flex - flex flex-col flex-grow flex-shrink flex-wrap justify-center items-center
-border - border border-gray-300 border-t border-b border-l border-r
-hover:shadow-md
--->
 <template>
   <div class="w-full md:w-4/5 p-4 mt-4 max-w-5xl mx-auto">
     <h1 class="text-3xl font-bold text-center mb-4">To-Do App</h1>
