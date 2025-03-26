@@ -48,6 +48,7 @@
   import { ref, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import { useAuthStore } from '@/store/authStore'; // Import the auth store
+  import { debugLog } from '@/utils/logger';
   
   export default {
     setup() {
@@ -59,28 +60,37 @@
       const authStore = useAuthStore(); // Use the auth store
         
       // Redirect if the user is already logged in
-        onMounted(() => {
-          if (authStore.isLoggedIn) {
-            router.push('/tasks');
-          }
-        });
+      onMounted(async () => {
+        if (!authStore.isInitialized) {
+          await authStore.initialize();
+        }
+
+        if (authStore.isAuthenticated) {
+          const redirectPath = authStore.redirectPath || '/tasks';
+          authStore.redirectPath = null; // Clear the redirect after use
+          router.push(redirectPath);
+        }
+      });
 
       const handleLogin = async () => {
         isLoading.value = true;
         error.value = '';
   
         try {
-          // Call the signIn action from the auth store
-          const user = await authStore.signIn(email.value, password.value);
-          if (user) {
-            console.log('User logged in:', user);
-            router.push('/tasks'); // Redirect to the tasks page after successful login
+          // Call the signIn action which now returns the redirect path
+          const redirectPath = await authStore.signIn(email.value, password.value);
+          
+          if (redirectPath) {
+            // Wait briefly to ensure auth state is updated
+            await new Promise(resolve => setTimeout(resolve, 100));
+            debugLog('Login successful, redirecting to:', redirectPath);
+            router.push(redirectPath);
           } else {
             error.value = 'Login failed. Please check your credentials.';
           }
         } catch (err) {
           error.value = 'An error occurred during login. Please try again.';
-          console.error('Login error:', err);
+          debugLog('Login error:', err);
         } finally {
           isLoading.value = false;
         }

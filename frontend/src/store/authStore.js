@@ -9,7 +9,9 @@ export const useAuthStore = defineStore('auth', {
     error: null,
     loading: true,
     authListener: null,
+    isReady: false, // The isReady flag helps track initialization state
     isInitialized: false, // Track initialization state
+    redirectPath: null,
   }),
 
   actions: {
@@ -31,26 +33,35 @@ export const useAuthStore = defineStore('auth', {
 
     async initialize() {
       if (this.isInitialized) return;
+      this.isReady = false;
       
       // Get current session quietly first
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) this.user = session.user;
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Session error:', error);
+        this.user = null;
+      } else if (session) {
+        this.user = session.user;
+      }
 
-      // Set up listener with debounce logic
+      this.setupAuthListener();
+      this.isReady = true;
+      this.isInitialized = true;
+    },
+
+    setupAuthListener() {
       this.authListener = supabase.auth.onAuthStateChange((event, session) => {
-        debugLog('Auth state changed:', event);  // Keep for debugging in DEV
+        debugLog('Auth state changed:', event);
         
-        // Only process certain events
         if (event === 'SIGNED_OUT') {
           this.handleSignOut();
-        } 
-        // Only update user if the ID actually changed
-        else if (session?.user?.id !== this.user?.id) {
-          this.user = session?.user || null;
+        } else if (session) {
+          // Only update if the user changed
+          if (!this.user || session.user.id !== this.user.id) {
+            this.user = session.user;
+          }
         }
       });
-
-      this.isInitialized = true;
     },
 
     handleSignOut() {
@@ -90,18 +101,23 @@ export const useAuthStore = defineStore('auth', {
     // Sign in an existing user
     async signIn(email, password) {
       try {
+        this.loading = true;
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           this.error = error;
           console.error('Error signing in:', error);
           return null;
         }
-        this.user = data.user;
-        return data.user;
+        // The auth listener will handle updating the user state
+        const redirectPath = this.redirectPath || '/tasks';
+        this.redirectPath = null;
+        return redirectPath;
       } catch (err) {
         this.error = err;
-        console.error('Unexpected error:', err);
+        console.error('Sign in error:', err);
         return null;
+      } finally {
+        this.loading = false;
       }
     },
 
@@ -138,10 +154,15 @@ export const useAuthStore = defineStore('auth', {
         }
       });
     },
+
+    setRedirectPath(path) {
+      this.redirectPath = path;
+    },
+
   },
 
   getters: {
     // Check if the user is logged in
-    isLoggedIn: (state) => !!state.user,
+    isAuthenticated: (state) => !!state.user,
   },
 });

@@ -12,20 +12,28 @@ const routes = [
   { 
     path: '/tasks', 
     component: TaskList,
-    meta: { requiresAuth: true } // Protect this route
+    meta: { 
+      requiresAuth: true ,
+      requiresInitialized: true,
+    } // Protect this route
   },
   { 
     path: '/profile', 
     component: UserProfile,
-    meta: { requiresAuth: true } // Protect this route
+    meta: { 
+      requiresAuth: true,
+      requiresInitialized: true
+    }// Protect this route
   },
   {
     path: '/signup',
-    component: Signup
+    component: Signup,
+    meta: { requiresUnauth: true }
   },
   {
     path: '/login',
-    component: Login
+    component: Login,
+    meta: { requiresUnauth: true }
   },
   { 
     path: '/AboutMe', 
@@ -39,21 +47,33 @@ const router = createRouter({
 });
 
 // Navigation guard
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore();
   
-  // Ensure auth store is initialized but don't trigger new initialization
-  if (!authStore.isInitialized) {
-    await authStore.fetchUser(); // Just get current user without setting up listener
+  // Initialize auth if needed
+  if (!authStore.isInitialized && to.meta.requiresInitialized) {
+    try {
+      await authStore.initialize();
+    } catch (error) {
+      console.error('Auth init error:', error);
+      return '/login';
+    }
   }
 
-  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
-    next('/login');
-  } else if ((to.path === '/login' || to.path === '/signup') && authStore.isLoggedIn) {
-    next('/tasks'); // Redirect away from auth pages if logged in
-  } else {
-    next();
+  // Auth required routes
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    authStore.redirectPath = to.fullPath;
+    return '/login';
   }
+
+  // Prevent authed users from accessing auth pages
+  if (to.meta.requiresUnauth && authStore.isAuthenticated) {
+    return '/tasks';
+  }
+
+  // Proceed normally
+  return true;
+  
 });
 
 export default router;

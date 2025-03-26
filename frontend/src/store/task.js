@@ -1,12 +1,20 @@
 import { defineStore } from 'pinia';
 import { supabase } from '../supabaseClient';
 
+const DEBUG = import.meta.env.DEV;
+
 export const useTaskStore = defineStore('task', {
   state: () => ({
     tasks: [],
-    subscription: null, // Store the real-time subscription
-    updateQueue: [], // Queue for updates
-    isProcessingQueue: false, // Flag to track queue processing
+    subscription: null,       // For INSERT/UPDATE events
+    deleteSubscription: null, // For DELETE events (separate channel)
+    updateQueue: [],
+    isProcessingQueue: false,
+    reconnectAttempts: 0,
+    maxReconnectAttempts: 5,
+    baseRetryDelay: 1000,
+    realtimeStatus: 'disconnected', // 'connected' | 'disconnected' | 'connecting'
+    lastConnectionTime: null,
   }),
 
   actions: {
@@ -34,6 +42,11 @@ export const useTaskStore = defineStore('task', {
 
     // Fetch all tasks from Supabase
     async fetchTasks(authStore, router) {
+      
+      if (!authStore.isInitialized) {
+        await authStore.initialize();
+      }
+
       const user = authStore.user;
       if (!user) {
         console.error('User is not logged in');
@@ -51,74 +64,162 @@ export const useTaskStore = defineStore('task', {
         if (error) throw error;
 
         this.tasks = data;
-
-        // Subscribe to real-time updates
-        this.subscription = supabase
-          .channel('tasks-insert-update')
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'tasks',
-              filter: `user_uuid=eq.${user.id}`,
-            },
-            (payload) => {
-              this.enqueueUpdate(() => {
-                // Check if the task already exists in the local state
-                const exists = this.tasks.some(t => t.id === payload.new.id);
-                if (!exists) {
-                  this.tasks = [payload.new, ...this.tasks];
-                }
-              });
-            }
-          )
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'tasks',
-              filter: `user_uuid=eq.${user.id}`,
-            },
-            (payload) => {
-              this.enqueueUpdate(() => {
-                const index = this.tasks.findIndex(t => t.id === payload.new.id);
-                if (index !== -1) {
-                  this.tasks[index] = payload.new;
-                }
-              });
-            }
-          )
-          .subscribe();
-
-        // Subscribe to DELETE events
-        this.deleteSubscription = supabase
-          .channel('tasks-delete')
-          .on(
-            'postgres_changes',
-            {
-              event: 'DELETE',
-              schema: 'public',
-              table: 'tasks',
-            },
-            (payload) => {
-              this.enqueueUpdate(() => {
-                const taskToDelete = this.tasks.find(t => t.id === payload.old.id);
-                if (taskToDelete && taskToDelete.user_uuid === user.id) {
-                  this.tasks = this.tasks.filter(t => t.id !== payload.old.id);
-                }
-              });
-            }
-          )
-          .subscribe();
+        this.setupRealtimeSubscriptions(authStore, router);
       } catch (error) {
         console.error('Error fetching tasks:', error);
       }
     },
 
+    setupRealtimeSubscriptions(authStore, router) {
+      const user = authStore.user;
+      
+      // Clean up any existing subscriptions
+      this.cleanup();
+
+      // Main channel for INSERT/UPDATE events (user-specific)
+      this.subscription = supabase
+        .channel('tasks-insert-update', {
+          config: {
+            broadcast: { ack: true },
+            presence: { key: `tasks-updates-${user.id}` },
+            heartbeatInterval: 30000,
+            timeout: 60000
+          }
+        })
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'tasks',
+            filter: `user_uuid=eq.${user.id}`,
+          },
+          (payload) => this.handleInsert(payload)
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'tasks',
+            filter: `user_uuid=eq.${user.id}`,
+          },
+          (payload) => this.handleUpdate(payload)
+        )
+        .on('error', (error) => this.handleChannelError(error, authStore, router))
+        .on('close', () => this.handleChannelClose(authStore, router))
+        .subscribe();
+
+      // Separate channel for DELETE events (no user filter)
+      this.deleteSubscription = supabase
+        .channel('tasks-delete', {
+          config: {
+            broadcast: { ack: false }, // No need for ack on delete channel
+            heartbeatInterval: 30000,
+            timeout: 60000
+          }
+        })
+        .on(
+          'postgres_changes',
+          {
+            event: 'DELETE',
+            schema: 'public',
+            table: 'tasks',
+          },
+          (payload) => this.handleDelete(payload, user.id) // Pass user.id for filtering
+        )
+        .subscribe();
+    },
+
+    async waitForSubscriptionReady() {
+      const maxWaitTime = 5000; // 5 seconds
+      const startTime = Date.now();
+      
+      while (!this.subscription && (Date.now() - startTime) < maxWaitTime) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      if (!this.subscription) {
+        throw new Error('Subscription failed to initialize');
+      }
+    },
+
+    handleInsert(payload) {
+      this.enqueueUpdate(() => {
+        const exists = this.tasks.some(t => t.id === payload.new.id);
+        if (!exists) {
+          this.tasks = [payload.new, ...this.tasks];
+        }
+      });
+    },
+
+    handleUpdate(payload) {
+      this.enqueueUpdate(() => {
+        const index = this.tasks.findIndex(t => t.id === payload.new.id);
+        if (index !== -1) {
+          this.tasks[index] = payload.new;
+        }
+      });
+    },
+
+    handleDelete(payload, currentUserId) {
+      this.enqueueUpdate(() => {
+        this.tasks = this.tasks.filter(t => 
+          t.id !== payload.old.id || t.user_uuid !== currentUserId
+        );
+      });
+    },
+
+    handleChannelError(error, authStore, router) {
+      console.error('Channel error:', error);
+      this.reconnect(authStore, router);
+    },
+
+    handleChannelClose(authStore, router) {
+      this.realtimeStatus = 'disconnected';
+      if (DEBUG) console.log('Channel closed - attempting to reconnect...');
+      this.reconnect(authStore, router);
+    },
+
+    handleReconnectSuccess() {
+      this.realtimeStatus = 'connected';
+      this.lastConnectionTime = new Date().toISOString();
+      this.resetReconnectAttempts();
+      if (DEBUG) console.log('Successfully reconnected to real-time channels');
+    },
+
+    reconnect(authStore, router) {
+      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        console.error('Max reconnection attempts reached');
+        return;
+      }
+
+      this.realtimeStatus = 'connecting';
+      this.reconnectAttempts++;
+      const delay = Math.min(this.baseRetryDelay * this.reconnectAttempts, 10000);
+      if (DEBUG) console.log(`Reconnecting attempt ${this.reconnectAttempts} in ${delay}ms`);
+    
+      setTimeout(async () => {
+        try {
+          await this.fetchTasks(authStore, router);
+          this.handleReconnectSuccess();
+        } catch (error) {
+          console.error('Reconnection failed:', error);
+        }
+      }, delay);
+    },
+
+    resetReconnectAttempts() {
+      this.reconnectAttempts = 0;
+    },
+
     // Add a new task to Supabase
     async addTask(taskTitle, authStore, router) {
+
+      if (!authStore.isInitialized) {
+        await authStore.initialize();
+      }
+
       const user = authStore.user;
       if (!user) {
         console.error('User is not logged in');
@@ -130,6 +231,8 @@ export const useTaskStore = defineStore('task', {
         console.error('Task title cannot be empty');
         return;
       }
+
+      await this.waitForSubscriptionReady();
 
       // Add the optimistic update to the queue
       this.enqueueUpdate(async () => {
@@ -170,6 +273,11 @@ export const useTaskStore = defineStore('task', {
 
     // Update task notes in Supabase
     async updateNotes(task, authStore, router) {
+
+      if (!authStore.isInitialized) {
+        await authStore.initialize();
+      }
+
       const user = authStore.user;
       if (!user) {
         console.error('User is not logged in');
@@ -209,6 +317,11 @@ export const useTaskStore = defineStore('task', {
 
     // Update task status in Supabase
     async updateStatus(task, authStore, router) {
+
+      if (!authStore.isInitialized) {
+        await authStore.initialize();
+      }
+
       const user = authStore.user;
       if (!user) {
         console.error('User is not logged in');
@@ -248,6 +361,11 @@ export const useTaskStore = defineStore('task', {
 
     // Delete a task from Supabase
     async deleteTask(task, authStore, router) {
+
+      if (!authStore.isInitialized) {
+        await authStore.initialize();
+      }
+      
       const user = authStore.user;
       if (!user) {
         console.error('User is not logged in');
@@ -279,9 +397,14 @@ export const useTaskStore = defineStore('task', {
     // Clean up the real-time subscription
     cleanup() {
       if (this.subscription) {
-        this.subscription.unsubscribe();
+        supabase.removeChannel(this.subscription); // Proper way to remove channel
         this.subscription = null;
       }
+      if (this.deleteSubscription) {
+        supabase.removeChannel(this.deleteSubscription);
+        this.deleteSubscription = null;
+      }
+      this.resetReconnectAttempts();
     },
   },
 });
