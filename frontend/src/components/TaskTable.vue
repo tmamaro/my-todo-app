@@ -21,32 +21,34 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="task in tasks" :key="task.id">
-            <td class="border px-4 py-2 break-words">{{ task.title }}</td>
+          <tr v-for="task in tasks" :key="task?.id">
+            <td class="border px-4 py-2 break-words">{{ task?.title }}</td>
             <td class="border px-4 py-2">
-              <textarea
-                class="w-full p-2 border"
-                v-model="task.notes"
-                @blur="updateTaskNotes(task.id, task.notes)"
-              ></textarea>
+              <div class="relative">
+                <textarea
+                  class="w-full p-2 border"
+                  :value="task.notes || ''"
+                  placeholder="Write your notes and click outside the box to save them :D"
+                  @blur="(event) => updateTaskNotes(task.id, task.title, event.target.value)"
+                  title="Exit box to save"
+                ></textarea>
+              </div>
             </td>
             <td class="border px-4 py-2 text-sm text-gray-500 text-center">{{ formatDate(task.created_at) }}</td>
             <td class="border px-4 py-2 text-center">
               <input
                 type="checkbox"
-                v-model="task.is_completed"
-                @change="updateTaskStatus(task.id, task.is_completed)"
+                :checked="task.is_completed"
+                @change="(event) => updateTaskStatus(task.id, task.title, event.target.checked)"
                 class="mx-auto block"
               />
             </td>
             <td class="border px-4 py-2 text-center">
-              <button
-                @click="deleteTask(task.id)"
-                class="bg-red-500 text-white px-2 py-0.5 justify-center"
-              >
-                x
-              </button>
-            </td>
+            <!-- Replace the 'x' with an image -->
+            <button @click="deleteTask(task?.id,  task?.title)" class="bg-transparent px-0 py-0 justify-center">
+              <img :src="deleteIcon" alt="Delete" class="w-8 h-8" />
+            </button>
+          </td>
           </tr>
         </tbody>
       </table>
@@ -55,6 +57,8 @@
   
   
   <script>
+  import deleteIcon from '@/assets/delete_icon_V3.png';
+
   export default {
     name: "TaskTable",
     props: {
@@ -69,9 +73,14 @@
       createdAtWidth: Number,
       statusWidth: Number,
       actionWidth: Number
-    }
-  };
-  </script>
+    },
+  data() {
+    return {
+      deleteIcon // Add the image to the data object so it can be used in the template
+    };
+  }
+};
+</script>
   
   <style scoped>
   

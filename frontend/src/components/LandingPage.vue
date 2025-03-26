@@ -10,7 +10,9 @@
 
       <!-- Content -->
       <div class="relative z-10 text-center text-white">
-        <h1 class="text-6xl font-bold mb-4 animate-fade-in-down">Welcome to the Todo App</h1>
+        <h1 class="text-4xl font-bold mb-5 animate-fade-in-down">Tired of excel or a plain text file to register your to dos?</h1>
+        <h1 class="text-6xl font-bold mb-5 animate-fade-in-down">Then welcome to Taskurai!</h1>
+        <h1 class="text-4xl font-bold mb-5 animate-fade-in-down">Your personal to do list app available everywhere :)</h1>
         <p class="text-xl mb-8 animate-fade-in-up">Click on the "Tasks" link to manage your tasks.</p>
         <router-link to="/tasks" class="inline-block bg-white text-blue-600 px-6 py-3 rounded-lg shadow-lg hover:bg-blue-50 transition duration-300 animate-bounce">
           Get Started

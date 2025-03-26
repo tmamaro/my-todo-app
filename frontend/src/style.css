@@ -7,7 +7,7 @@
 /* eslint-disable-next-line */
 @tailwind utilities;
 
-
+/* Global Styles */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -15,7 +15,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;/* #242424; */
+  background-color: #242424; /* Default background color */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -33,16 +33,23 @@ a:hover {
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  margin: 0; /* Remove margins from the body */
+  padding: 0; /* Remove padding from the body */
+  width: 100%;
+  height: 100vh; /* Ensure full viewport height */
+  display: flex; /* Use flexbox to fill the screen */
+  flex-direction: column; /* Stack elements vertically */
+  overflow: hidden; /* Prevent scrollbars if the background is animated */
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+}
+
+h2 {
+  font-size: 1.6em;
+  line-height: 1.2;
 }
 
 button {
@@ -69,10 +76,13 @@ button:focus-visible {
 }
 
 #app {
-  max-width:2280px;
-  margin: 0 auto;
-  padding: 2rem;
+  max-width: 100%; /* Ensure the app takes the full available width */
+  margin: 0; /* Remove unnecessary margins */
+  padding: 0; /* Remove unnecessary padding */
   text-align: center;
+  display: flex; /* Flexbox will allow full screen height */
+  flex-direction: column; /* Ensure the layout is stacked vertically */
+  flex-grow: 1; /* Ensure the app grows to fill available space */
 }
 
 @media (prefers-color-scheme: light) {
@@ -89,25 +99,39 @@ button:focus-visible {
 }
 
 /* Example for adding responsiveness */
-
 @media screen and (max-width: 640px) {
 
   .task-list {
-
-      flex-direction: column;
-
+    flex-direction: column;
   }
 
   .task-table {
-
-      display: block;
-
-      overflow-x: auto;
-
+    display: block;
+    overflow-x: auto;
   }
 }
 
+/* Background Animation */
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh; /* Ensure it covers the entire viewport */
+  background: url('your-background-image.png'); /* If you have an image */
+  background-size: cover;
+  background-position: center;
+  animation: backgroundAnimation 15s infinite; /* Replace with your animation */
+  z-index: -1; /* Send the background behind the content */
+}
+
 /* Custom Animations */
+@keyframes backgroundAnimation {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-20px) translateX(20px); }
+}
+
 @keyframes float1 {
   0%, 100% { transform: translateY(0) translateX(0); }
   50% { transform: translateY(-20px) translateX(20px); }

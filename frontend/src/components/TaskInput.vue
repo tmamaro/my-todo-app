@@ -18,17 +18,21 @@
 
 <script>
 import { ref } from 'vue';
-import { useTaskStore } from '@/store/task';
+import { useTaskStore } from '@/store/task'; // Import the task store
+import { useAuthStore } from '@/store/authStore'; // Import the auth store
+import { useRouter } from 'vue-router'; // Import Vue Router
 
 export default {
   name: 'TaskInput',
   setup() {
     const taskInput = ref('');
-    const taskStore = useTaskStore();
+    const taskStore = useTaskStore(); // Use the task store
+    const authStore = useAuthStore(); // Use the auth store
+    const router = useRouter(); // Use the router
 
     const handleAddTask = async () => {
       if (taskInput.value.trim()) {
-        await taskStore.addTask(taskInput.value);
+        await taskStore.addTask(taskInput.value, authStore, router); // Pass authStore and router to addTask
         taskInput.value = ''; // Clear the input after adding
       }
     };

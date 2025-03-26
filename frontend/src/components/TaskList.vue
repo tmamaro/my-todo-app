@@ -24,7 +24,9 @@
 
 <script>
 import { computed, onMounted, ref } from 'vue';
-import { useTaskStore } from '@/store/task';
+import { useTaskStore } from '@/store/task'; // Import the task store
+import { useAuthStore } from '@/store/authStore'; // Import the auth store
+import { useRouter } from 'vue-router'; // Import Vue Router
 import TaskInput from './TaskInput.vue';
 import TaskTable from './TaskTable.vue';
 
@@ -32,7 +34,9 @@ export default {
   name: 'TaskList',
   components: { TaskInput, TaskTable },
   setup() {
-    const taskStore = useTaskStore();
+    const taskStore = useTaskStore(); // Use the task store
+    const authStore = useAuthStore(); // Use the auth store
+    const router = useRouter(); // Use the router
 
     // State for column widths
     const titleWidth = ref(150);
@@ -45,29 +49,42 @@ export default {
     const tasks = computed(() => taskStore.tasks);
 
     // Fetch tasks when component is mounted
-    onMounted(() => {
-      taskStore.fetchTasks();
+    onMounted(async () => {
+      if (!authStore.user) {
+        router.push('/login'); // Redirect to login if not authenticated
+        return;
+      }
+    
+      try {
+        await taskStore.fetchTasks(authStore, router); // Pass authStore and router to fetchTasks
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
     });
 
     // Methods to interact with the store
-    const updateTaskNotes = async (taskId, notes) => {
-      const task = taskStore.tasks.find(t => t.id === taskId);
-      if (task) {
-        task.notes = notes;
-        await taskStore.updateNotes(task);
+    const updateTaskNotes = async (taskId, taskTitle, notes) => {
+      try {
+        await taskStore.updateNotes({ id: taskId, title: taskTitle, notes }, authStore, router);
+      } catch (error) {
+        console.error('Error updating task notes:', error);
       }
     };
 
-    const updateTaskStatus = async (taskId, isCompleted) => {
-      const task = taskStore.tasks.find(t => t.id === taskId);
-      if (task) {
-        task.is_completed = isCompleted;
-        await taskStore.updateStatus(task);
+    const updateTaskStatus = async (taskId, taskTitle, isCompleted) => {
+      try {
+        await taskStore.updateStatus({ id: taskId, title: taskTitle, is_completed: isCompleted }, authStore, router);
+      } catch (error) {
+        console.error('Error updating task status:', error);
       }
     };
 
-    const deleteTask = async (taskId) => {
-      await taskStore.deleteTask(taskId);
+    const deleteTask = async (taskId, taskTitle) => {
+      try {
+        await taskStore.deleteTask({ id: taskId, title: taskTitle}, authStore, router);
+      } catch (error) {
+        console.error('Error deleting task:', error);
+      }
     };
 
     const formatDate = (dateString) => {
