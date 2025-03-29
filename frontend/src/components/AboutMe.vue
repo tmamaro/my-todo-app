@@ -1,6 +1,13 @@
 <template>
   <div class="p-6 max-w-4xl mx-auto">
     <h1 class="text-3xl font-bold text-center text-gray-900 mb-6">About Taskurai</h1>
+    <div class="h-full flex items-center justify-center mb-6">
+      <img 
+        src="@/assets/home_icon_7.png" 
+        alt="Home" 
+        class="h-20 w-20 object-contain rounded-full"
+      >
+    </div>
     <p class="text-lg text-center text-gray-700">
       Welcome to Taskurai, a productivity tool that helps you master your tasks with focus and discipline!
     </p>

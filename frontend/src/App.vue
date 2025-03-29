@@ -32,7 +32,7 @@ export default {
 
     onMounted(async () => {
       await authStore.initialize();
-      setTimeout(() => loading.value = false, 600); // Small delay for smoother transition
+      setTimeout(() => loading.value = false, 600); // Small delay for smoother transition, this can be deleted to simply hide the loading screen
       loading.value = false;
     });
 

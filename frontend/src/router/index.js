@@ -3,7 +3,9 @@ import LandingPage from '../components/LandingPage.vue';
 import TaskList from '../components/TaskList.vue';
 import UserProfile from '../components/UserProfile.vue';
 import Signup from '../components/Signup.vue';
+import SignupConfirmation from '../components/SignupConfirmation.vue';
 import Login from '../components/Login.vue';
+import AuthCallback from '../components/AuthCallback.vue';
 import AboutMe from '../components/AboutMe.vue';
 import { useAuthStore } from '../store/authStore'; // Import the auth store
 
@@ -34,6 +36,20 @@ const routes = [
     path: '/login',
     component: Login,
     meta: { requiresUnauth: true }
+  },
+  {
+    path: '/signup-confirmation',
+    name: 'SignupConfirmation',
+    component: SignupConfirmation,
+    meta: { 
+      requiresAuth: false,
+      requiresInitialized: true 
+    }
+  },
+  {
+    path: '/auth/callback',
+    name: 'AuthCallback',
+    component: AuthCallback,
   },
   { 
     path: '/AboutMe', 
@@ -73,7 +89,7 @@ router.beforeEach(async (to) => {
 
   // Proceed normally
   return true;
-  
+
 });
 
 export default router;

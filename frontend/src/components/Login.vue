@@ -36,6 +36,9 @@
           </button>
           <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
         </form>
+
+        <SocialAuth />
+
         <p class="mt-4 text-center text-sm text-gray-600">
           Don't have an account?
           <router-link to="/signup" class="text-green-600 hover:underline">Sign up</router-link>
@@ -49,8 +52,12 @@
   import { useRouter } from 'vue-router';
   import { useAuthStore } from '@/store/authStore'; // Import the auth store
   import { debugLog } from '@/utils/logger';
+  import SocialAuth from '@/components/SocialAuth.vue'; // Import the SocialAuth component
   
   export default {
+    components: {
+      SocialAuth
+    },
     setup() {
       const email = ref('');
       const password = ref('');

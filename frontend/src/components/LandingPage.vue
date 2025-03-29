@@ -1,6 +1,6 @@
 <template>
   <div class="w-full"> <!-- Use full width within the Layout's 90% constraint -->
-    <div class="relative min-h-[calc(100vh-8rem)] flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 overflow-hidden">
+    <div class="relative min-h-[calc(100vh-6.25rem)] flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 overflow-hidden">
       <!-- Moving background elements -->
       <div class="absolute inset-0 z-0">
         <div class="absolute w-24 h-24 bg-white rounded-full opacity-10 animate-float1"></div>

@@ -83,18 +83,26 @@ export const useAuthStore = defineStore('auth', {
     // Sign up a new user
     async signUp(email, password) {
       try {
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) {
-          this.error = error;
-          console.error('Error signing up:', error);
-          return null;
-        }
-        this.user = data.user;
-        return data.user;
-      } catch (err) {
-        this.error = err;
-        console.error('Unexpected error:', err);
-        return null;
+        this.loading = true;
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: window.location.origin // For email confirmation
+          }
+        });
+    
+        if (error) throw error;
+        
+        return { 
+          success: true,
+          email: data.user?.email 
+        };
+      } catch (error) {
+        this.error = error;
+        return { success: false, error };
+      } finally {
+        this.loading = false;
       }
     },
 
@@ -124,23 +132,51 @@ export const useAuthStore = defineStore('auth', {
     // Sign out the current user
     async signOut() {
       try {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-          this.error = error;
-          console.error('Error signing out:', error);
-          return false;
-        }
+        this.loading = true
+        const { error } = await supabase.auth.signOut()
+        if (error) throw error
+        
+        // Clear local state
+        this.user = null
+        this.redirectPath = null
+        
+        // Clean up any stores
+        const taskStore = useTaskStore()
+        taskStore.cleanup()
+      } catch (error) {
+        this.error = error
+        throw new Error('Logout failed')
+      } finally {
+        this.loading = false
+      }
+    },
 
-        // Clean up the task store subscription
-        const taskStore = useTaskStore();
-        taskStore.cleanup();
-
-        this.user = null;
+    async resendConfirmation(email) {
+      try {
+        const { error } = await supabase.auth.resend({
+          type: 'signup',
+          email: email
+        });
+        if (error) throw error;
         return true;
-      } catch (err) {
-        this.error = err;
-        console.error('Unexpected error:', err);
-        return false;
+      } catch (error) {
+        console.error('Error resending confirmation:', error);
+        throw error;
+      }
+    },
+  
+    async signInWithProvider(provider) {
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: provider,
+          options: {
+            redirectTo: window.location.origin + '/tasks'
+          }
+        });
+        if (error) throw error;
+      } catch (error) {
+        console.error(`${provider} sign in failed:`, error);
+        throw error;
       }
     },
 
