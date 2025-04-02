@@ -1,20 +1,55 @@
 <template>
-  <div class="w-full"> <!-- Use full width within the Layout's 90% constraint -->
-    <h1 class="text-6xl font-bold mb-4">User Profile</h1> <!-- Consistent heading size -->
-    <div class="bg-indigo-600 p-6 rounded-lg shadow-md"> <!-- Add a card-like container -->
-      <p class="text-lg mb-2"><strong>Name:</strong> John Doe</p>
-      <p class="text-lg mb-2"><strong>Email:</strong> johndoe@example.com</p>
-      <!-- You can add a form to edit profile info here -->
+  <div class="profile-container">
+    <div class="avatar-section">
+      <img 
+        :src="userAvatar" 
+        class="avatar"
+        @click="triggerFileInput"
+      />
+      <input 
+        type="file" 
+        ref="fileInput"
+        @change="handleAvatarUpload"
+        accept="image/*"
+        hidden
+      />
+    </div>
+    
+    <div class="profile-details">
+      <h2>{{ user.email }}</h2>
+      <p>Member since: {{ formatDate(user.created_at) }}</p>
+      
+      <div class="stats">
+        <div class="stat-card">
+          <h3>Tasks Completed</h3>
+          <p>{{ completedTasksCount }}</p>
+        </div>
+        <div class="stat-card">
+          <h3>Open Tasks</h3>
+          <p>{{ pendingTasksCount }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'UserProfile',
+<script setup>
+import { computed } from 'vue';
+import { useAuthStore } from '@/store/authStore';
+import { useTaskStore } from '@/store/task';
+
+const authStore = useAuthStore();
+const taskStore = useTaskStore();
+
+const user = computed(() => authStore.user);
+const completedTasksCount = computed(() => 
+  taskStore.tasks.filter(t => t.is_completed).length
+);
+const pendingTasksCount = computed(() =>
+  taskStore.tasks.filter(t => !t.is_completed).length
+);
+
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString();
 };
 </script>
-
-<style scoped>
-/* Add any custom styling for this page */
-</style>
