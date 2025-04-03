@@ -214,7 +214,9 @@ export const useTaskStore = defineStore('task', {
     },
 
     // Add a new task to Supabase
-    async addTask(taskTitle, authStore, router) {
+    async addTask( taskData, authStore, router) {
+
+      const taskTitle = taskData.title; // Assuming title is passed as a parameter
 
       if (!authStore.isInitialized) {
         await authStore.initialize();
@@ -227,7 +229,7 @@ export const useTaskStore = defineStore('task', {
         return;
       }
 
-      if (!taskTitle.trim()) {
+      if (!taskData.title.trim()) {
         console.error('Task title cannot be empty');
         return;
       }
@@ -240,18 +242,32 @@ export const useTaskStore = defineStore('task', {
           // Optimistic update: Add the task locally
           const newTask = {
             id: `temp-${Date.now()}`, // Temporary ID (optional, can be removed)
-            title: taskTitle,
-            notes: '',
+            title: taskData.title,
+            notes: '', // taskData.notes || '', // Default if not provided
             is_completed: false,
             user_uuid: user.id,
             created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            due_date: taskData.due_date || null,     // Default if not provided
+            priority: taskData.priority || 'medium', // Default if not provided
+            category: '', // taskData.category || '', // Default if not provided
           };
           this.tasks = [newTask, ...this.tasks];
 
           // Insert into the database
           const { data, error } = await supabase
             .from('tasks')
-            .insert([{ title: taskTitle, notes: '', is_completed: false, user_uuid: user.id }])
+            .insert([{ 
+              title: taskData.title, 
+              notes: '', 
+              is_completed: false, 
+              user_uuid: user.id,
+              //created_at: newTask.created_at,
+              //updated_at: newTask.updated_at,
+              due_date: taskData.due_date || null,
+              priority: taskData.priority || 'medium',
+              category: '' // taskData.category || ''
+            }])
             .select();
 
           if (error) throw error;

@@ -14,6 +14,30 @@
       Add Task
     </button>
   </div>
+
+  <!-- NEW: Priority selector (initially hidden) -->
+  <div v-if="showPriority" class="flex justify-center gap-2 mb-2">
+    <button
+      v-for="priority in priorities"
+      @click="selectedPriority = priority.value"
+      class="px-3 py-1 text-xs rounded-md"
+      :class="priority === selectedPriority ? 
+             'bg-indigo-100 text-indigo-800' : 
+             'bg-gray-100 text-gray-600'"
+    >
+      {{ priority.label }}
+    </button>
+  </div>
+
+  <!-- NEW: Optional due date picker -->
+  <div v-if="showDueDate" class="flex justify-center">
+    <input
+      type="date"
+      v-model="dueDate"
+      class="border rounded-md p-1 text-sm"
+      :min="new Date().toISOString().split('T')[0]"
+    />
+  </div>
 </template>
 
 <script>
@@ -29,11 +53,30 @@ export default {
     const taskStore = useTaskStore(); // Use the task store
     const authStore = useAuthStore(); // Use the auth store
     const router = useRouter(); // Use the router
-
+    const selectedPriority = ref('medium');
+    const dueDate = ref('');
+    const showPriority = ref(true); // Disabled by default
+    const showDueDate = ref(true);  // Disabled by default
+    const priorities = [
+      { value: 'low', label: 'Low' },
+      { value: 'medium', label: 'Medium' },
+      { value: 'high', label: 'High' }
+    ];
+    
     const handleAddTask = async () => {
+      
       if (taskInput.value.trim()) {
-        await taskStore.addTask(taskInput.value, authStore, router); // Pass authStore and router to addTask
-        taskInput.value = ''; // Clear the input after adding
+        await taskStore.addTask(
+          {
+          title: taskInput.value,
+          priority: showPriority.value ? selectedPriority.value : undefined,
+          due_date: showDueDate.value ? dueDate.value : undefined
+          }, 
+          authStore,
+          router
+        ); // Pass authStore and router to addTask 
+        taskInput.value = '';
+        dueDate.value = '';
       }
     };
 
@@ -46,6 +89,11 @@ export default {
 
     return {
       taskInput,
+      selectedPriority,
+      dueDate,
+      priorities,
+      showPriority,
+      showDueDate, 
       handleAddTask,
       handleKeyPress,
     };
