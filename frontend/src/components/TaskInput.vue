@@ -64,19 +64,39 @@ export default {
     ];
     
     const handleAddTask = async () => {
-      
-      if (taskInput.value.trim()) {
+      // Basic validation
+      if (!taskInput.value.trim()) {
+        alert('Task title cannot be empty');
+        return;
+      }
+    
+      // Date validation
+      if (showDueDate.value && dueDate.value) {
+        const selectedDate = new Date(dueDate.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < today) {
+          alert('Due date cannot be in the past');
+          return;
+        }
+      }
+    
+      try {
         await taskStore.addTask(
           {
-          title: taskInput.value,
-          priority: showPriority.value ? selectedPriority.value : undefined,
-          due_date: showDueDate.value ? dueDate.value : undefined
+            title: taskInput.value,
+            priority: showPriority.value ? selectedPriority.value : undefined,
+            due_date: showDueDate.value ? dueDate.value : undefined
           }, 
           authStore,
           router
-        ); // Pass authStore and router to addTask 
+        );
         taskInput.value = '';
         dueDate.value = '';
+      } catch (error) {
+        console.error('Error adding task:', error);
+        alert('Failed to add task. Please try again.');
       }
     };
 
@@ -86,7 +106,7 @@ export default {
         handleAddTask();
       }
     };
-
+    
     return {
       taskInput,
       selectedPriority,

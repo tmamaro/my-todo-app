@@ -216,8 +216,6 @@ export const useTaskStore = defineStore('task', {
     // Add a new task to Supabase
     async addTask( taskData, authStore, router) {
 
-      const taskTitle = taskData.title; // Assuming title is passed as a parameter
-
       if (!authStore.isInitialized) {
         await authStore.initialize();
       }
@@ -229,8 +227,18 @@ export const useTaskStore = defineStore('task', {
         return;
       }
 
-      if (!taskData.title.trim()) {
+      if (!taskData.title?.trim()) {
         console.error('Task title cannot be empty');
+        return;
+      }
+
+      if (taskData.priority && !['low', 'medium', 'high'].includes(taskData.priority)) {
+        console.error('Invalid priority value');
+        return;
+      }
+    
+      if (taskData.due_date && isNaN(new Date(taskData.due_date).getTime())) {
+        console.error('Invalid due date');
         return;
       }
 
@@ -248,9 +256,9 @@ export const useTaskStore = defineStore('task', {
             user_uuid: user.id,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            due_date: taskData.due_date || null,     // Default if not provided
-            priority: taskData.priority || 'medium', // Default if not provided
-            category: '', // taskData.category || '', // Default if not provided
+            due_date: taskData.due_date || null,
+            priority: taskData.priority || 'medium',
+            category: '', // taskData.category || '',
           };
           this.tasks = [newTask, ...this.tasks];
 
@@ -286,6 +294,76 @@ export const useTaskStore = defineStore('task', {
         }
       });
     },
+
+    // Add a new action to update all task fields
+    async updateTask(task, authStore, router) {
+
+      if (!authStore.isInitialized) {
+        await authStore.initialize();
+      }
+
+      const user = authStore.user;
+      if (!user) {
+        console.error('User is not logged in');
+        router.push('/login');
+        return;
+      }
+
+      // Validation
+      if (!task.title?.trim()) {
+        console.error('Task title cannot be empty');
+        return;
+      }
+    
+      if (task.priority && !['low', 'medium', 'high'].includes(task.priority)) {
+        console.error('Invalid priority value');
+        return;
+      }
+    
+      if (task.due_date && isNaN(new Date(task.due_date).getTime())) {
+        console.error('Invalid due date');
+        return;
+      }
+    
+      this.enqueueUpdate(async () => {
+        try {
+          // Optimistic update
+          const taskIndex = this.tasks.findIndex(t => t.id === task.id);
+          if (taskIndex !== -1) {
+            this.tasks[taskIndex] = { 
+              ...this.tasks[taskIndex], 
+              title: task.title,
+              notes: task.notes,
+              due_date: task.due_date,
+              priority: task.priority
+            };
+          }
+        
+          // Update the task in the database -> talvez separar isto em varias funções para cada campo ou então juntar tudo numa só
+          const { data, error } = await supabase
+            .from('tasks')
+            .update({ 
+              title: task.title, // tirar esta linha se eu n quiser atualizar o titulo
+              notes: task.notes,
+              due_date: task.due_date,
+              priority: task.priority
+            })
+            .eq('id', task.id)
+            .eq('user_uuid', user.id)
+            .select();
+          
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            this.tasks[taskIndex] = data[0];
+          }
+        } catch (error) {
+          console.error('Error updating task:', error);
+          this.tasks = [...this.tasks];
+        }
+      });
+    },
+
 
     // Update task notes in Supabase
     async updateNotes(task, authStore, router) {
