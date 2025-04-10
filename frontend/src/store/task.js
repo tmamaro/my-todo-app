@@ -227,19 +227,21 @@ export const useTaskStore = defineStore('task', {
         return;
       }
 
+      // Enhanced validation
       if (!taskData.title?.trim()) {
-        console.error('Task title cannot be empty');
-        return;
-      }
-
-      if (taskData.priority && !['low', 'medium', 'high'].includes(taskData.priority)) {
-        console.error('Invalid priority value');
-        return;
+        throw new Error('Task title cannot be empty');
       }
     
+      if (taskData.title.length > 100) {
+        throw new Error('Task title cannot exceed 100 characters');
+      }
+    
+      if (taskData.priority && !['low', 'medium', 'high'].includes(taskData.priority)) {
+        throw new Error('Invalid priority value');
+      }
+      
       if (taskData.due_date && isNaN(new Date(taskData.due_date).getTime())) {
-        console.error('Invalid due date');
-        return;
+        throw new Error('Invalid due date');
       }
 
       await this.waitForSubscriptionReady();

@@ -3,13 +3,13 @@
       <table>
         <thead>
           <tr class="bg-indigo-400">
-            <th ref="actionCol" class="relative" :style="{ width: Math.round(actionWidth) + 'px', minWidth: '60px' }">
+            <th ref="actionCol" class="relative" :style="{ width: Math.round(actionWidth) + 'px', minWidth: '100px' }">
               Action <div class="resizer" @mousedown="startResize($event, 'actionCol')"></div>
             </th>
-            <th ref="titleCol" class="relative" :style="{ width: Math.round(titleWidth) + 'px', minWidth: '60px' }">
+            <th ref="titleCol" class="relative" :style="{ width: Math.round(titleWidth) + 'px', minWidth: '150px' }">
               Title <div class="resizer" @mousedown="startResize($event, 'titleCol')"></div>
             </th>
-            <th ref="notesCol" class="relative" :style="{ width: Math.round(notesWidth) + 'px', minWidth: '60px' }">
+            <th ref="notesCol" class="relative" :style="{ width: Math.round(notesWidth) + 'px', minWidth: '250px' }">
               Notes <div class="resizer" @mousedown="startResize($event, 'notesCol')"></div>
             </th>
             <th ref="priorityCol" class="relative" :style="{ width: Math.round(priorityWidth) + 'px', minWidth: '120px' }">
@@ -21,7 +21,7 @@
             <th ref="dueDateCol" class="relative" :style="{ width: Math.round(dueDateWidth) + 'px', minWidth: '170px' }">
               Due Date <div class="resizer" @mousedown="startResize($event, 'dueDateCol')"></div>
             </th>
-            <th ref="createdAtCol" class="relative" :style="{ width: Math.round(createdAtWidth) + 'px', minWidth: '60px' }">
+            <th ref="createdAtCol" class="relative" :style="{ width: Math.round(createdAtWidth) + 'px', minWidth: '150px' }">
               Created<div class="resizer" @mousedown="startResize($event, 'createdAtCol')"></div>
             </th>
           </tr>
