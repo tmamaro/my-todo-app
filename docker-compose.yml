@@ -1,36 +1,13 @@
 services:
-  db:
-    image: postgres:17
-    container_name: todo_app_psql_container
-    restart: always
-    environment:
-      POSTGRES_USER: tmamaro
-      POSTGRES_PASSWORD: TAProjectToDos
-      POSTGRES_DB: todo_db
-    volumes:
-      - pg_data:/var/lib/postgresql/data  # This will use the volume name defined below
-    ports:
-      - "5432:5432"
-  backend:
-    build: ./backend
-    depends_on:
-      - db
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://tmamaro:TAProjectToDos@db:5432/todo_db
   frontend:
     build: ./frontend
     container_name: todo-frontend
     restart: always
-    depends_on:
-      - backend
     ports:
       - "5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      VITE_API_URL: "http://localhost:8000"
-volumes:
-  pg_data:
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
