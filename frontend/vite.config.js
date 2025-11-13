@@ -6,7 +6,14 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': '/src', // Make sure this points to your src directory
+      '@': '/src',
+    },
+  },
+  server: {
+    host: true, // Listen on all addresses
+    port: 5173,
+    watch: {
+      usePolling: true, // Required for Windows/Docker
     },
   },
 });
