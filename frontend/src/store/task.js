@@ -15,6 +15,14 @@ export const useTaskStore = defineStore('task', {
     baseRetryDelay: 1000,
     realtimeStatus: 'disconnected', // 'connected' | 'disconnected' | 'connecting'
     lastConnectionTime: null,
+    loadingStates: {
+      addTask: false,
+      updateTask: false,
+      updateNotes: false,
+      updateStatus: false,
+      deleteTask: false,
+      fetchTasks: false
+    }
   }),
 
   actions: {
@@ -54,6 +62,8 @@ export const useTaskStore = defineStore('task', {
         return;
       }
 
+      this.loadingStates.fetchTasks = true;
+
       try {
         const { data, error } = await supabase
           .from('tasks')
@@ -67,6 +77,9 @@ export const useTaskStore = defineStore('task', {
         this.setupRealtimeSubscriptions(authStore, router);
       } catch (error) {
         console.error('Error fetching tasks:', error);
+        throw error; // Re-throw for component handling
+      } finally {
+        this.loadingStates.addTask = false;
       }
     },
 
@@ -246,6 +259,8 @@ export const useTaskStore = defineStore('task', {
 
       await this.waitForSubscriptionReady();
 
+      this.loadingStates.addTask = true;
+
       // Add the optimistic update to the queue
       this.enqueueUpdate(async () => {
         try {
@@ -290,9 +305,12 @@ export const useTaskStore = defineStore('task', {
             }
           }
         } catch (error) {
-          console.error('Error adding task:', error);
+          //console.error('Error adding task:', error);
           // Rollback the optimistic update
           this.tasks = this.tasks.filter(t => t.id !== newTask.id);
+          throw error; // Re-throw for component handling
+        } finally {
+          this.loadingStates.addTask = false;
         }
       });
     },
@@ -327,6 +345,8 @@ export const useTaskStore = defineStore('task', {
         return;
       }
     
+      this.loadingStates.updateTask = true;
+
       this.enqueueUpdate(async () => {
         try {
           // Optimistic update
@@ -362,6 +382,9 @@ export const useTaskStore = defineStore('task', {
         } catch (error) {
           console.error('Error updating task:', error);
           this.tasks = [...this.tasks];
+          throw error; // Re-throw for component handling
+        } finally {
+          this.loadingStates.updateTask = false;
         }
       });
     },
@@ -380,6 +403,8 @@ export const useTaskStore = defineStore('task', {
         router.push('/login');
         return;
       }
+
+      this.loadingStates.updateNotes = true;
 
       this.enqueueUpdate(async () => {
         try {
@@ -407,6 +432,9 @@ export const useTaskStore = defineStore('task', {
           console.error('Error updating task notes:', error);
           // Rollback the optimistic update
           this.tasks = [...this.tasks];
+          throw error; // Re-throw for component handling
+        } finally {
+          this.loadingStates.updateNotes = false;
         }
       });
     },
@@ -424,6 +452,8 @@ export const useTaskStore = defineStore('task', {
         router.push('/login');
         return;
       }
+
+      this.loadingStates.updateStatus = true;
 
       this.enqueueUpdate(async () => {
         try {
@@ -451,6 +481,9 @@ export const useTaskStore = defineStore('task', {
           console.error('Error updating task status:', error);
           // Rollback the optimistic update
           this.tasks = [...this.tasks];
+          throw error; // Re-throw for component handling
+        } finally {
+          this.loadingStates.updateStatus = false;
         }
       });
     },
@@ -469,6 +502,8 @@ export const useTaskStore = defineStore('task', {
         return;
       }
 
+      this.loadingStates.deleteTask = true;
+
       this.enqueueUpdate(async () => {
         try {
           // Optimistic update
@@ -486,6 +521,9 @@ export const useTaskStore = defineStore('task', {
           console.error('Error deleting task:', error);
           // Rollback the optimistic update
           this.tasks = [...this.tasks, task];
+          throw error; // Re-throw for component handling
+        } finally {
+          this.loadingStates.deleteTask = false;
         }
       });
     },

@@ -27,70 +27,115 @@
           </tr>
         </thead>
         <tbody>
+          <!-- Loading state for initial fetch -->
+          <tr v-if="loading && tasks.length === 0">
+            <td :colspan="7" class="text-center py-4">
+              <div class="flex justify-center">
+                <LoadingSpinner />
+              </div>
+            </td>
+          </tr>
+           <!-- Rows for each task -->
           <tr v-for="task in tasks" :key="task?.id">
             <td class="border px-4 py-2 text-center">
               <!-- Replace the 'x' with an image -->
-              <button @click="deleteTask(task?.id,  task?.title)" class="bg-transparent px-0 py-0 justify-center">
-                <img :src="deleteIcon" alt="Delete" class="w-8 h-8" />
+              <button 
+                @click="deleteTask(task?.id,  task?.title)"
+                :disabled="deleting"
+                class="bg-transparent px-0 py-0 justify-center"
+              >
+                <template v-if="!deleting">
+                  <img :src="deleteIcon" alt="Delete" class="w-8 h-8" />
+                </template>
+                <LoadingSpinner v-else class="w-8 h-8" />
               </button>
             </td>
-            <td class="border px-4 py-2 break-words">{{ task?.title }}</td>
-            <td class="border px-4 py-2">
-              <div class="relative">
-                <textarea
-                  class="w-full p-2 border"
-                  :value="task.notes || ''"
-                  placeholder="Write your notes and click outside the box to save them :D"
-                  @blur="(event) => updateTaskNotes(task.id, task.title, event.target.value)"
-                  title="Exit box to save"
-                ></textarea>
-              </div>
-            </td>
-            <td class="border px-4 py-2 text-center">
-              <div class="relative">
-                <select 
-                  :value="task.priority || 'medium'"
-                  @change="(event) => updateTaskPriority(task.id, event.target.value)"
-                  class="w-full p-1 border rounded text-center"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-              </div>
-            </td>
-            <td class="border px-4 py-2 text-center">
+            <!-- Title column -->
+          <td class="border px-4 py-2 break-words">{{ task?.title }}</td>
+          
+          <!-- Notes column with loading -->
+          <td class="border px-4 py-2">
+            <div class="relative">
+              <textarea
+                class="w-full p-2 border"
+                :value="task.notes || ''"
+                placeholder="Write your notes and click outside the box to save them :D"
+                @blur="(event) => updateTaskNotes(task.id, task.title, event.target.value)"
+                :disabled="updatingNotes"
+                title="Exit box to save"
+              ></textarea>
+              <LoadingSpinner v-if="updatingNotes" class="absolute right-2 top-2 h-4 w-4" />
+            </div>
+          </td>
+          
+          <!-- Priority column with loading -->
+          <td class="border px-4 py-2 text-center">
+            <div class="relative">
+              <select 
+                :value="task.priority || 'medium'"
+                @change="(event) => updateTaskPriority(task.id, event.target.value)"
+                :disabled="updatingPriority"
+                class="w-full p-1 border rounded text-center"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+              <LoadingSpinner v-if="updatingPriority" class="absolute right-2 top-2 h-4 w-4" />
+            </div>
+          </td>
+          
+          <!-- Status column with loading -->
+          <td class="border px-4 py-2 text-center">
+            <div class="relative">
               <input
                 type="checkbox"
                 :checked="task.is_completed"
                 @change="(event) => updateTaskStatus(task.id, task.title, event.target.checked)"
+                :disabled="updatingStatus"
                 class="mx-auto block"
               />
-            </td>
-            <td class="border px-4 py-2 text-center">
-              <div class="relative">
-                <input
-                  type="date"
-                  :value="task.due_date ? task.due_date.split('T')[0] : ''"
-                  @change="(event) => updateTaskDueDate(task.id, event.target.value)"
-                  :min="new Date().toISOString().split('T')[0]"
-                  class="w-full p-1 border rounded text-center"
-                />
-              </div>
-            </td>
-            <td class="border px-4 py-2 text-sm text-gray-500 text-center">{{ formatDate(task.created_at) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </template>
+              <LoadingSpinner v-if="updatingStatus" class="absolute right-2 top-2 h-4 w-4" />
+            </div>
+          </td>
+          
+          <!-- Due Date column with loading -->
+          <td class="border px-4 py-2 text-center">
+            <div class="relative">
+              <input
+                type="date"
+                :value="task.due_date ? task.due_date.split('T')[0] : ''"
+                @change="(event) => updateTaskDueDate(task.id, event.target.value)"
+                :min="new Date().toISOString().split('T')[0]"
+                :disabled="updatingDueDate"
+                class="w-full p-1 border rounded text-center"
+              />
+              <LoadingSpinner v-if="updatingDueDate" class="absolute right-2 top-2 h-4 w-4" />
+            </div>
+          </td>
+          
+          <!-- Created At column -->
+          <td class="border px-4 py-2 text-sm text-gray-500 text-center">
+            {{ formatDate(task.created_at) }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</template>
   
   
-  <script>
+<script>
   import deleteIcon from '@/assets/delete_icon_V3.png';
+  import { useTaskStore } from '@/store/task';
+  import { computed } from 'vue';
+  import LoadingSpinner from './LoadingSpinner.vue'; // Import the loading spinner component
 
   export default {
     name: "TaskTable",
+    components: {
+      LoadingSpinner
+    },
     props: {
       tasks: Array,
       updateTaskNotes: Function,
@@ -108,7 +153,27 @@
       dueDateWidth: Number,
       createdAtWidth: Number
     },
+
+  setup() {
+    const taskStore = useTaskStore();
     
+    // Access loading states from the store
+    const loading = computed(() => taskStore.loadingStates.fetchTasks);
+    const updatingNotes = computed(() => taskStore.loadingStates.updateNotes);
+    const updatingPriority = computed(() => taskStore.loadingStates.updateTask);
+    const updatingStatus = computed(() => taskStore.loadingStates.updateStatus);
+    const updatingDueDate = computed(() => taskStore.loadingStates.updateTask);
+    const deleting = computed(() => taskStore.loadingStates.deleteTask);
+
+    return {
+      loading,
+      updatingNotes,
+      updatingPriority,
+      updatingStatus,
+      updatingDueDate,
+      deleting
+    };
+  },
   data() {
     return {
       deleteIcon // Add the image to the data object so it can be used in the template

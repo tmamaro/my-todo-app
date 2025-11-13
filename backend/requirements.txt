@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-sqlalchemy
-psycopg2-binary  # or psycopg2 (if you want to build from source)
-passlib[bcrypt]
-python-jose[cryptography]
-python-multipart

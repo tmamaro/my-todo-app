@@ -33,6 +33,7 @@ import { useAuthStore } from '@/store/authStore'; // Import the auth store
 import { useRouter } from 'vue-router'; // Import Vue Router
 import TaskInput from './TaskInput.vue';
 import TaskTable from './TaskTable.vue';
+import { useToast } from '@/composables/useToast';
 
 export default {
   name: 'TaskList',
@@ -41,6 +42,8 @@ export default {
     const taskStore = useTaskStore(); // Use the task store
     const authStore = useAuthStore(); // Use the auth store
     const router = useRouter(); // Use the router
+    const { notify } = useToast();
+    const loading = computed(() => taskStore.loadingStates.fetchTasks);
 
     // State for column widths
     const actionWidth = ref(100);
@@ -73,24 +76,26 @@ export default {
 
     const deleteTask = async (taskId, taskTitle) => {
       try {
-        await taskStore.deleteTask({ id: taskId, title: taskTitle}, authStore, router);
+        await taskStore.deleteTask({ id: taskId, title: taskTitle }, authStore, router);
+        notify('Task deleted successfully', 'success');
       } catch (error) {
-        console.error('Error deleting task:', error);
+        notify(error.message, 'error');
       }
     };
 
     const updateTaskNotes = async (taskId, taskTitle, notes) => {
       try {
         await taskStore.updateNotes({ id: taskId, title: taskTitle, notes }, authStore, router);
+        notify('Notes updated successfully', 'success');
       } catch (error) {
-        console.error('Error updating task notes:', error);
+        notify(error.message, 'error');
       }
     };
 
     const updateTaskPriority = async (taskId, priority) => {
       try {
         const task = taskStore.tasks.find(t => t.id === taskId);
-        if (!task) return;
+        if (!task) throw new Error('Task not found');
 
         await taskStore.updateTask({
           id: taskId,
@@ -100,16 +105,22 @@ export default {
           priority: priority,
           due_date: task.due_date
         }, authStore, router);
+
+        notify('Priority updated successfully', 'success');
+
       } catch (error) {
-        console.error('Error updating task priority:', error);
+        console.notify('Error updating task priority:', error);
+        notify(error.message, 'error');
       }
     };
 
     const updateTaskStatus = async (taskId, taskTitle, isCompleted) => {
       try {
         await taskStore.updateStatus({ id: taskId, title: taskTitle, is_completed: isCompleted }, authStore, router);
+        notify('Status updated successfully', 'success');
       } catch (error) {
         console.error('Error updating task status:', error);
+        notify(error.message, 'error');
       }
     };
 
@@ -126,8 +137,10 @@ export default {
           priority: task.priority,
           due_date: dueDate || null
         }, authStore, router);
+        notify('Due date updated successfully', 'success');
       } catch (error) {
         console.error('Error updating task due date:', error);
+        notify(error.message, 'error');
       }
     };
 

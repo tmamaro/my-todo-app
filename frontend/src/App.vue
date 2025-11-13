@@ -1,6 +1,7 @@
 <template>
   <Layout v-if="!loading">
     <router-view />
+    <ToastNotification ref="toast" />
   </Layout>
   <!-- OUR MAIN SECTION FULL SCREEN LOADING -->
 <!-- OUR MAIN SECTION FULL SCREEN LOADING -->
@@ -22,13 +23,18 @@ import Layout from './components/Layout.vue';
 import { useAuthStore } from '@/store/authStore';
 import { useTaskStore } from '@/store/task';
 import { onMounted, onUnmounted, ref } from 'vue';
+import ToastNotification from '@/components/ToastNotification.vue';
+import { setToastInstance } from '@/composables/useToast';
 
 export default {
-  components: { Layout },
+  components: { Layout,
+    ToastNotification 
+   },
   setup() {
     const loading = ref(true);
     const authStore = useAuthStore();
     const taskStore = useTaskStore();
+    const toast = ref(null);
 
     onMounted(async () => {
       await authStore.initialize();
@@ -39,9 +45,15 @@ export default {
     onUnmounted(() => {
       authStore.cleanup();
       taskStore.cleanup();
+      if (toast.value) {
+        setToastInstance(toast.value);
+      }
     });
 
-    return { loading };
+    return { 
+      loading,
+      toast 
+     };
   }
 };
 </script>
