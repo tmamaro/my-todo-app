@@ -54,9 +54,9 @@ export default {
     const taskStore = useTaskStore(); // Use the task store
     const authStore = useAuthStore(); // Use the auth store
     const router = useRouter(); // Use the router
-    //const { notify } = useToast();
+    const { notify } = useToast();
     //// Use a ref for the notify function to avoid accessing toast before it's ready
-    const notify = ref(() => {}); // Placeholder until setToastInstance is called in App.vue //testing
+    //const notify = ref(() => {}); // Placeholder until setToastInstance is called in App.vue //testing
     const loading = computed(() => taskStore.loadingStates.fetchTasks);
 
     // State for column widths
