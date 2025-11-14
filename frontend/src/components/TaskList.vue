@@ -12,7 +12,7 @@
 
     <!-- Show empty state if no tasks are present and not loading -->
     <div v-else-if="tasks.length === 0" class="text-center py-10 text-lg text-indigo-300">
-      "Add your first Task!
+      Add your first Task to get started!
     </div>
     
     <!-- Show TaskTable only if there are tasks -->
