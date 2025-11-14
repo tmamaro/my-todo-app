@@ -4,9 +4,21 @@
     
     <!-- TaskInput Component -->
     <TaskInput />
+
+    <!-- Show loading spinner while fetching -->
+    <div v-if="loading" class="flex justify-center items-center min-h-[200px]">
+      <LoadingSpinner />
+    </div>
+
+    <!-- Show empty state if no tasks are present and not loading -->
+    <div v-else-if="tasks.length === 0" class="text-center py-10 text-lg text-indigo-300">
+      "Add your first Task!
+    </div>
     
+    <!-- Show TaskTable only if there are tasks -->
     <!-- TaskTable Component -->
     <TaskTable
+      v-else
       :tasks="tasks"
       :deleteTask="deleteTask"
       :updateTaskNotes="updateTaskNotes"
