@@ -40,15 +40,15 @@ export default {
       await authStore.initialize();
       setTimeout(() => loading.value = false, 600); // Small delay for smoother transition, this can be deleted to simply hide the loading screen
       loading.value = false;
-      setToastInstance(toastComponentReference);
+      setToastInstance(toast.value);
     });
 
     onUnmounted(() => {
       authStore.cleanup();
       taskStore.cleanup();
-      if (toast.value) {
-        setToastInstance(toast.value);
-      }
+      //if (toast.value) {
+      //  setToastInstance(toast.value);
+      //}
     });
 
     return { 
