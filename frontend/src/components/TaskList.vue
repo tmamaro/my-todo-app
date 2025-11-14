@@ -229,8 +229,8 @@ export default {
       priorityWidth,
       statusWidth,
       dueDateWidth,
-      createdAtWidth,
-      notify //testing
+      createdAtWidth
+      //,notify //testing
     };
   }
 };
