@@ -45,17 +45,20 @@ import { useAuthStore } from '@/store/authStore'; // Import the auth store
 import { useRouter } from 'vue-router'; // Import Vue Router
 import TaskInput from './TaskInput.vue';
 import TaskTable from './TaskTable.vue';
-import { useToast } from '@/composables/useToast';
+import LoadingSpinner from './LoadingSpinner.vue'; // Import loading spinner
+import { useToast } from '@/composables/useToast'; // Use toast composable
 
 export default {
   name: 'TaskList',
-  components: { TaskInput, TaskTable },
+  components: { TaskInput, TaskTable, LoadingSpinner },
   setup() {
     const taskStore = useTaskStore(); // Use the task store
     const authStore = useAuthStore(); // Use the auth store
     const router = useRouter(); // Use the router
-    const { notify } = useToast();
-    const loading = computed(() => taskStore.loadingStates.fetchTasks);
+    const loading = computed(() => taskStore.loadingStates.fetchTasks); // Show spinner when loading
+
+    // Use a ref for the notify function to avoid accessing toast before it's ready
+    const notify = ref(() => {}); // Placeholder until setToastInstance is called in App.vue
 
     // State for column widths
     const actionWidth = ref(100);
@@ -65,42 +68,47 @@ export default {
     const statusWidth = ref(60);
     const dueDateWidth = ref(170); // Default width for due date column
     const createdAtWidth = ref(150);
-    
 
     // Computed property to ensure tasks are reactive
     const tasks = computed(() => taskStore.tasks);
 
     // Fetch tasks when component is mounted
     onMounted(async () => {
+      // Notify initialization (wait for toast instance)
+      setTimeout(() => {
+        notify.value = useToast().notify;
+      });
+
+      // Fetch tasks logic
       if (!authStore.user) {
-        router.push('/login'); // Redirect to login if not authenticated
+        router.push('/login');
         return;
       }
-    
       try {
-        await taskStore.fetchTasks(authStore, router); // Pass authStore and router to fetchTasks
+        await taskStore.fetchTasks(authStore, router);
       } catch (error) {
         console.error('Error fetching tasks:', error);
       }
     });
+
 
     // Methods to interact with the store
 
     const deleteTask = async (taskId, taskTitle) => {
       try {
         await taskStore.deleteTask({ id: taskId, title: taskTitle }, authStore, router);
-        notify('Task deleted successfully', 'success');
+        notify.value('Task deleted successfully', 'success');
       } catch (error) {
-        notify(error.message, 'error');
+        notify.value(error.message, 'error');
       }
     };
 
     const updateTaskNotes = async (taskId, taskTitle, notes) => {
       try {
         await taskStore.updateNotes({ id: taskId, title: taskTitle, notes }, authStore, router);
-        notify('Notes updated successfully', 'success');
+        notify.value('Notes updated successfully', 'success');
       } catch (error) {
-        notify(error.message, 'error');
+        notify.value(error.message, 'error');
       }
     };
 
@@ -108,7 +116,6 @@ export default {
       try {
         const task = taskStore.tasks.find(t => t.id === taskId);
         if (!task) throw new Error('Task not found');
-
         await taskStore.updateTask({
           id: taskId,
           title: task.title,
@@ -117,22 +124,18 @@ export default {
           priority: priority,
           due_date: task.due_date
         }, authStore, router);
-
-        notify('Priority updated successfully', 'success');
-
+        notify.value('Priority updated successfully', 'success');
       } catch (error) {
-        console.notify('Error updating task priority:', error);
-        notify(error.message, 'error');
+        notify.value(error.message, 'error');
       }
     };
 
     const updateTaskStatus = async (taskId, taskTitle, isCompleted) => {
       try {
         await taskStore.updateStatus({ id: taskId, title: taskTitle, is_completed: isCompleted }, authStore, router);
-        notify('Status updated successfully', 'success');
+        notify.value('Status updated successfully', 'success');
       } catch (error) {
-        console.error('Error updating task status:', error);
-        notify(error.message, 'error');
+        notify.value(error.message, 'error');
       }
     };
 
@@ -140,7 +143,6 @@ export default {
       try {
         const task = taskStore.tasks.find(t => t.id === taskId);
         if (!task) return;
-        
         await taskStore.updateTask({
           id: taskId,
           title: task.title,
@@ -149,13 +151,13 @@ export default {
           priority: task.priority,
           due_date: dueDate || null
         }, authStore, router);
-        notify('Due date updated successfully', 'success');
+        notify.value('Due date updated successfully', 'success');
       } catch (error) {
-        console.error('Error updating task due date:', error);
-        notify(error.message, 'error');
+        notify.value(error.message, 'error');
       }
     };
 
+    // Format date utility for display
     const formatDate = (dateString) => {
       const date = new Date(dateString);
       return date.toLocaleString(); // Custom formatting can be applied
@@ -168,7 +170,7 @@ export default {
       notesCol: 100,    // Minimum width for Notes column
       priorityCol: 70,  // Minimum width for Priority column
       statusCol: 60,    // Minimum width for Status column
-      dueDateCol: 50,  // Minimum width for Due Date column
+      dueDateCol: 50,   // Minimum width for Due Date column
       createdAtCol: 100 // Minimum width for Created At column
     };
 
@@ -226,9 +228,10 @@ export default {
       priorityWidth,
       statusWidth,
       dueDateWidth,
-      createdAtWidth
+      createdAtWidth,
+      loading,
+      notify // Export notify ref for template or child use
     };
   }
 };
 </script>
-
