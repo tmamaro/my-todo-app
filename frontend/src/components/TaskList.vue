@@ -18,10 +18,102 @@
     </div>
     
     <!-- Show TaskTable only if there are tasks -->
+    <!-- Filters -->
+    <div
+     v-else
+     class="bg-white shadow rounded-lg p-4 mb-4 border border-indigo-200"
+    >
+     <h2 class="text-lg font-semibold mb-2 text-indigo-900">Filter tasks</h2>
+     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div>
+       <label class="block text-sm font-medium text-indigo-800 mb-1">Title</label>
+       <input
+        v-model="filters.title"
+        type="text"
+        placeholder="Filter by title"
+        class="w-full border rounded px-3 py-2"
+       />
+      </div>
+      <div>
+       <label class="block text-sm font-medium text-indigo-800 mb-1">Notes</label>
+       <input
+        v-model="filters.notes"
+        type="text"
+        placeholder="Filter by notes"
+        class="w-full border rounded px-3 py-2"
+       />
+      </div>
+      <div>
+       <label class="block text-sm font-medium text-indigo-800 mb-1">Priority</label>
+       <select
+        v-model="filters.priority"
+        class="w-full border rounded px-3 py-2"
+       >
+        <option value="all">All</option>
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+       </select>
+      </div>
+      <div>
+       <label class="block text-sm font-medium text-indigo-800 mb-1">Status</label>
+       <select
+        v-model="filters.status"
+        class="w-full border rounded px-3 py-2"
+       >
+        <option value="all">All</option>
+        <option value="completed">Completed</option>
+        <option value="pending">Pending</option>
+       </select>
+      </div>
+      <div>
+       <label class="block text-sm font-medium text-indigo-800 mb-1">Due date from</label>
+       <input
+        v-model="filters.dueDateFrom"
+        type="date"
+        class="w-full border rounded px-3 py-2"
+       />
+      </div>
+      <div>
+       <label class="block text-sm font-medium text-indigo-800 mb-1">Due date to</label>
+       <input
+        v-model="filters.dueDateTo"
+        type="date"
+        class="w-full border rounded px-3 py-2"
+       />
+      </div>
+      <div>
+       <label class="block text-sm font-medium text-indigo-800 mb-1">Created from</label>
+       <input
+        v-model="filters.createdFrom"
+        type="date"
+        class="w-full border rounded px-3 py-2"
+       />
+      </div>
+      <div>
+       <label class="block text-sm font-medium text-indigo-800 mb-1">Created to</label>
+       <input
+        v-model="filters.createdTo"
+        type="date"
+        class="w-full border rounded px-3 py-2"
+       />
+      </div>
+      <div class="flex items-end">
+       <button
+        type="button"
+        class="w-full bg-indigo-500 text-white px-3 py-2 rounded hover:bg-indigo-600"
+        @click="resetFilters"
+       >
+        Reset filters
+       </button>
+      </div>
+     </div>
+    </div>
+
     <!-- TaskTable Component -->
     <TaskTable
      v-else
-     :tasks="tasks"
+     :tasks="filteredAndSortedTasks"
      :deleteTask="deleteTask"
      :updateTaskNotes="updateTaskNotes"
      :updateTaskPriority="updateTaskPriority"
@@ -36,13 +128,16 @@
      :dueDateWidth="dueDateWidth"
      :createdAtWidth="createdAtWidth"
      :startResize="startResize"
+     :sortKey="sortKey"
+     :sortDirection="sortDirection"
+     :onSort="handleSort"
     />
    </div>
   </template>
   
   
   <script>
-  import { computed, onMounted, ref } from 'vue';
+  import { computed, onMounted, reactive, ref } from 'vue';
   import { useTaskStore } from '@/store/task'; // Import the task store
   import { useAuthStore } from '@/store/authStore'; // Import the auth store
   import { useRouter } from 'vue-router'; // Import Vue Router
@@ -75,6 +170,20 @@
   
     // Computed property to ensure tasks are reactive
     const tasks = computed(() => taskStore.tasks);
+
+    const filters = reactive({
+     title: '',
+     notes: '',
+     priority: 'all',
+     status: 'all',
+     dueDateFrom: '',
+     dueDateTo: '',
+     createdFrom: '',
+     createdTo: ''
+    });
+
+    const sortKey = ref('created_at');
+    const sortDirection = ref('desc');
   
   
     // Fetch tasks when component is mounted
@@ -177,6 +286,88 @@
      const date = new Date(dateString);
      return date.toLocaleString(); // Custom formatting can be applied
     };
+
+    const normalizeDate = (value) => value ? new Date(value) : null;
+
+    const filteredAndSortedTasks = computed(() => {
+     const titleFilter = filters.title.trim().toLowerCase();
+     const notesFilter = filters.notes.trim().toLowerCase();
+     const dueFrom = normalizeDate(filters.dueDateFrom);
+     const dueTo = normalizeDate(filters.dueDateTo);
+     const createdFrom = normalizeDate(filters.createdFrom);
+     const createdTo = normalizeDate(filters.createdTo);
+
+     const filtered = tasks.value.filter((task) => {
+      const matchesTitle = titleFilter
+       ? (task.title || '').toLowerCase().includes(titleFilter)
+       : true;
+      const matchesNotes = notesFilter
+       ? (task.notes || '').toLowerCase().includes(notesFilter)
+       : true;
+      const matchesPriority = filters.priority === 'all'
+       ? true
+       : task.priority === filters.priority;
+      const matchesStatus = filters.status === 'all'
+       ? true
+       : filters.status === 'completed'
+        ? task.is_completed
+        : !task.is_completed;
+
+      const dueDate = task.due_date ? new Date(task.due_date) : null;
+      const createdDate = task.created_at ? new Date(task.created_at) : null;
+
+      const matchesDueFrom = dueFrom ? (dueDate ? dueDate >= dueFrom : false) : true;
+      const matchesDueTo = dueTo ? (dueDate ? dueDate <= dueTo : false) : true;
+      const matchesCreatedFrom = createdFrom ? (createdDate ? createdDate >= createdFrom : false) : true;
+      const matchesCreatedTo = createdTo ? (createdDate ? createdDate <= createdTo : false) : true;
+
+      return matchesTitle && matchesNotes && matchesPriority && matchesStatus &&
+       matchesDueFrom && matchesDueTo && matchesCreatedFrom && matchesCreatedTo;
+     });
+
+     const sorted = [...filtered].sort((a, b) => {
+      const key = sortKey.value;
+      const direction = sortDirection.value === 'asc' ? 1 : -1;
+
+      const aValue = a[key];
+      const bValue = b[key];
+
+      if (aValue === null || aValue === undefined) return 1;
+      if (bValue === null || bValue === undefined) return -1;
+
+      if (key === 'title' || key === 'notes' || key === 'priority') {
+       return aValue.localeCompare(bValue) * direction;
+      }
+
+      if (key === 'is_completed') {
+       return (aValue === bValue ? 0 : aValue ? 1 : -1) * direction;
+      }
+
+      return (new Date(aValue) - new Date(bValue)) * direction;
+     });
+
+     return sorted;
+    });
+
+    const handleSort = (key) => {
+     if (sortKey.value === key) {
+      sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+     } else {
+      sortKey.value = key;
+      sortDirection.value = key === 'created_at' ? 'desc' : 'asc';
+     }
+    };
+
+    const resetFilters = () => {
+     filters.title = '';
+     filters.notes = '';
+     filters.priority = 'all';
+     filters.status = 'all';
+     filters.dueDateFrom = '';
+     filters.dueDateTo = '';
+     filters.createdFrom = '';
+     filters.createdTo = '';
+    };
   
   
     // Resize column logic
@@ -233,12 +424,18 @@
   
     return {
      tasks,
+     filters,
+     filteredAndSortedTasks,
      updateTaskNotes,
      updateTaskPriority,
      updateTaskStatus,
      updateTaskDueDate,
      deleteTask,
      formatDate,
+     resetFilters,
+     sortKey,
+     sortDirection,
+     handleSort,
      startResize,
      actionWidth,
      titleWidth,

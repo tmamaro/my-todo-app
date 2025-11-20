@@ -7,22 +7,46 @@
               Action <div class="resizer" @mousedown="startResize($event, 'actionCol')"></div>
             </th>
             <th ref="titleCol" class="relative" :style="{ width: Math.round(titleWidth) + 'px', minWidth: '150px' }">
-              Title <div class="resizer" @mousedown="startResize($event, 'titleCol')"></div>
+              <button class="header-button" type="button" @click="() => onSort('title')">
+                <span>Title</span>
+                <span class="sort-indicator">{{ sortIndicator('title') }}</span>
+              </button>
+              <div class="resizer" @mousedown="startResize($event, 'titleCol')"></div>
             </th>
             <th ref="notesCol" class="relative" :style="{ width: Math.round(notesWidth) + 'px', minWidth: '250px' }">
-              Notes <div class="resizer" @mousedown="startResize($event, 'notesCol')"></div>
+              <button class="header-button" type="button" @click="() => onSort('notes')">
+                <span>Notes</span>
+                <span class="sort-indicator">{{ sortIndicator('notes') }}</span>
+              </button>
+              <div class="resizer" @mousedown="startResize($event, 'notesCol')"></div>
             </th>
             <th ref="priorityCol" class="relative" :style="{ width: Math.round(priorityWidth) + 'px', minWidth: '120px' }">
-              Priority <div class="resizer" @mousedown="startResize($event, 'priorityCol')"></div>
+              <button class="header-button" type="button" @click="() => onSort('priority')">
+                <span>Priority</span>
+                <span class="sort-indicator">{{ sortIndicator('priority') }}</span>
+              </button>
+              <div class="resizer" @mousedown="startResize($event, 'priorityCol')"></div>
             </th>
             <th ref="statusCol" class="relative" :style="{ width: Math.round(statusWidth) + 'px', minWidth: '60px' }">
-              Status <div class="resizer" @mousedown="startResize($event, 'statusCol')"></div>
+              <button class="header-button" type="button" @click="() => onSort('is_completed')">
+                <span>Status</span>
+                <span class="sort-indicator">{{ sortIndicator('is_completed') }}</span>
+              </button>
+              <div class="resizer" @mousedown="startResize($event, 'statusCol')"></div>
             </th>
             <th ref="dueDateCol" class="relative" :style="{ width: Math.round(dueDateWidth) + 'px', minWidth: '170px' }">
-              Due Date <div class="resizer" @mousedown="startResize($event, 'dueDateCol')"></div>
+              <button class="header-button" type="button" @click="() => onSort('due_date')">
+                <span>Due Date</span>
+                <span class="sort-indicator">{{ sortIndicator('due_date') }}</span>
+              </button>
+              <div class="resizer" @mousedown="startResize($event, 'dueDateCol')"></div>
             </th>
             <th ref="createdAtCol" class="relative" :style="{ width: Math.round(createdAtWidth) + 'px', minWidth: '150px' }">
-              Created<div class="resizer" @mousedown="startResize($event, 'createdAtCol')"></div>
+              <button class="header-button" type="button" @click="() => onSort('created_at')">
+                <span>Created</span>
+                <span class="sort-indicator">{{ sortIndicator('created_at') }}</span>
+              </button>
+              <div class="resizer" @mousedown="startResize($event, 'createdAtCol')"></div>
             </th>
           </tr>
         </thead>
@@ -151,10 +175,13 @@
       priorityWidth: Number,
       statusWidth: Number,
       dueDateWidth: Number,
-      createdAtWidth: Number
+      createdAtWidth: Number,
+      sortKey: String,
+      sortDirection: String,
+      onSort: Function
     },
 
-  setup() {
+  setup(props) {
     const taskStore = useTaskStore();
     
     // Access loading states from the store
@@ -165,13 +192,20 @@
     const updatingDueDate = computed(() => taskStore.loadingStates.updateTask);
     const deleting = computed(() => taskStore.loadingStates.deleteTask);
 
+    const sortIndicator = (key) => {
+      if (props.sortKey !== key) return '↕';
+      return props.sortDirection === 'asc' ? '▲' : '▼';
+    };
+
     return {
       loading,
       updatingNotes,
       updatingPriority,
       updatingStatus,
       updatingDueDate,
-      deleting
+      deleting,
+      sortIndicator,
+      onSort: props.onSort
     };
   },
   data() {
@@ -217,5 +251,24 @@
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
+  }
+
+  .header-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .header-button:hover {
+    background-color: #e0e7ff;
+  }
+
+  .sort-indicator {
+    font-size: 0.75rem;
+    color: #312e81;
   }
   </style>

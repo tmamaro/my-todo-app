@@ -13,16 +13,24 @@
   </template>
   
   <script>
+  import { setToastInstance } from '@/composables/useToast';
+
   export default {
     data() {
       return {
         toasts: []
       };
     },
+    mounted() {
+      setToastInstance(this);
+    },
+    beforeUnmount() {
+      setToastInstance(null);
+    },
     methods: {
       showNotification(message, type = 'info') {
         this.toasts.push({ message, type });
-  
+
         setTimeout(() => {
           this.toasts.shift();
         }, 3000);

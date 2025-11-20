@@ -1,7 +1,6 @@
 <template>
   <Layout v-if="!loading">
     <router-view />
-    <ToastNotification ref="toast" />
   </Layout>
   <!-- OUR MAIN SECTION FULL SCREEN LOADING -->
 <!-- OUR MAIN SECTION FULL SCREEN LOADING -->
@@ -16,15 +15,16 @@
   <svg xmlns="http://www.w3.org/2000/svg" class="text-blue-900 filter mix-blend-overlay h-16 w-16" viewBox="0 0 200 200"><circle fill="#FFFFFF" stroke="#FFFFFF" stroke-width="20" r="15" cx="40" cy="65"><animate attributeName="cy" calcMode="spline" dur="1" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.4"></animate></circle><circle fill="#FFFFFF" stroke="#FFFFFF" stroke-width="20" r="15" cx="100" cy="65"><animate attributeName="cy" calcMode="spline" dur="1" values="65;135;65;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.2"></animate></circle><circle fill="#FFFFFF" stroke="#FFFFFF" stroke-width="20" r="15" cx="160" cy="65"><animate attributeName="cy" calcMode="spline" dur="1" values="65;135;65;" keySpelines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="0"></animate></circle></svg>
 </section>
 
+  <ToastNotification />
+
 </template>
 
 <script>
 import Layout from './components/Layout.vue';
 import { useAuthStore } from '@/store/authStore';
 import { useTaskStore } from '@/store/task';
-import { onMounted, onUnmounted, ref, nextTick } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import ToastNotification from '@/components/ToastNotification.vue';
-import { setToastInstance } from '@/composables/useToast';
 
 export default {
   components: { Layout,
@@ -34,19 +34,10 @@ export default {
     const loading = ref(true);
     const authStore = useAuthStore();
     const taskStore = useTaskStore();
-    const toast = ref(null);
 
     onMounted(async () => {
       await authStore.initialize();
-      
-      // Wait for the next tick to ensure the toast component is mounted
-      await nextTick();
-      
-      // Initialize toast instance
-      if (toast.value) {
-        setToastInstance(toast.value);
-      }
-      
+
       // Small delay for smoother transition, this can be deleted to simply hide the loading screen
       setTimeout(() => {
         loading.value = false;
@@ -56,13 +47,10 @@ export default {
     onUnmounted(() => {
       authStore.cleanup();
       taskStore.cleanup();
-      // Clear toast instance on unmount
-      setToastInstance(null);
     });
 
-    return { 
-      loading,
-      toast 
+    return {
+      loading
      };
   }
 };
